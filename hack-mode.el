@@ -30,7 +30,7 @@
 ;;
 
 ;;; Code:
-(require 'xhp-indent)
+(require 'hack-xhp-indent)
 (require 'lsp-hack)
 (require 'font-lock)
 (require 'cc-mode)
@@ -655,7 +655,7 @@ Argument LANGELEM the location of the close of the arglist"
               (lsp-hack-enable)
               ;; Regions can be indented using LSP, lines cannot, yet
               (set (make-local-variable 'indent-line-function)
-                   #'xhp-indent-line)
+                   #'hack-xhp-indent-line)
               ))
 
   (c-common-init 'hack-mode)

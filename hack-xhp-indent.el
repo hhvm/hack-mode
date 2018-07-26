@@ -1,4 +1,4 @@
-;;; xhp-indent.el --- indent xhp fragments -*- lexical-binding: t -*-
+;;; hack-xhp-indent.el --- indent xhp fragments -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2018  Facebook, Inc.
 
@@ -15,30 +15,41 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+;;; Commentary:
+;; Special code that attempts to indent single lines in XHP
+;; syntax.  hack-mode is based on cc-mode, which was never meant to
+;; support arbitrary XML fragments.  Indenting regions is handled by
+;; LSP, but indenting single lines still is done fully inside of this
+;; package.  There are plenty of problems here, and this code is overly
+;; complex for what it offers.  Ideally, this package would wither away
+;; and we'd push more and more of this into LSP
+
 ;;; Code:
 
 (require 'cc-mode)
 
-(defvar xhp-indent-debug-on nil)
+(defvar hack-xhp-indent-debug-on nil)
 
-(defvar xhp-indent-start-regex "\\(return +\\|^ *\\|==> *\\|\\? *\\|= *\\|( *\\)<[^<\\]"
-  "the regex used to match the valid start of an xhp expression")
+(defvar hack-xhp-indent-start-regex "\\(return +\\|^ *\\|==> *\\|\\? *\\|= *\\|( *\\)<[^<\\]"
+  "The regex used to match the valid start of an xhp expression.")
 
-(defvar xhp-indent-syntax-attributes
-  '(xhp-indent-in-attribute
-    xhp-indent-in-mutiline-php-in-xhp-block
-    xhp-indent-in-closing-elt
-    xhp-indent-in-closing-stmt
-    xhp-indent-in-first-statement-after-xhp
-    xhp-indent-php-in-xhp
-    xhp-indent-in-xhp))
+(defvar hack-xhp-indent-syntax-attributes
+  '(hack-xhp-indent-in-attribute
+    hack-xhp-indent-in-mutiline-php-in-xhp-block
+    hack-xhp-indent-in-closing-elt
+    hack-xhp-indent-in-closing-stmt
+    hack-xhp-indent-in-first-statement-after-xhp
+    hack-xhp-indent-php-in-xhp
+    hack-xhp-indent-in-xhp))
 
-(defun xhp-indent-debug (&rest args)
-  (if xhp-indent-debug-on
+(defun hack-xhp-indent-debug (&rest args)
+  "Log ARGS if hack-xhp-indent-debug-on is set."
+  (if hack-xhp-indent-debug-on
       (apply 'message args)))
 
-(defun xhp-indent-previous-semi (min)
-  "helper for finding the previous semicolon not in a string or comment"
+(defun hack-xhp-indent-previous-semi (min)
+  "Helper for finding the previous semicolon not in a string or comment.
+Argument MIN Minimum point to search to."
   (if (not min)
       (setq min (point-min)))
   (if (> min (point))
@@ -58,13 +69,11 @@
 ;; 1000 was chosen somewhat arbitrarily in that it didn't seem to
 ;; perform worse than 500 in a test file, but seems more than
 ;; sufficient to encompass a single xhp statement
-(defconst xhp-indent-max-backtrack 1000
-  "the maximum number of characters that xhp-indent will look
-  backwards for xhp start. js_strings.php was the motivation for
-  this")
+(defconst hack-xhp-indent-max-backtrack 1000
+  "Maximum distance to search backwards in hack-xhp-indent.")
 
-(defun xhp-indent-xhp-detect ()
-  "determine if xhp around or above point will affect indentation"
+(defun hack-xhp-indent-xhp-detect ()
+  "Determine if xhp around or above point will affect indentation."
   (save-excursion
     (c-save-buffer-state
         (
@@ -76,7 +85,7 @@
             (c-most-enclosing-brace (c-parse-state))))
          (min (save-excursion
                 (or
-                 (xhp-indent-previous-semi min-brace)
+                 (hack-xhp-indent-previous-semi min-brace)
                  min-brace
                  (+ (point-min) 5) ;; skip past <?php
                  )))
@@ -89,7 +98,7 @@
       (save-excursion
         (if (and
              (> (point) min)
-             (re-search-backward xhp-indent-start-regex min t)
+             (re-search-backward hack-xhp-indent-start-regex min t)
              (not (c-in-literal)))
             (setq
              xhp-start-pos (point)
@@ -127,7 +136,7 @@
                     (cond
                      ;; CASE 0: indenting an attribute
                      ((looking-at "^ *[a-zA-Z_-]+")
-                      (list base-indent 'xhp-indent-in-attribute))
+                      (list base-indent 'hack-xhp-indent-in-attribute))
                      ;; CASE 1: Terminating a multiline php block is a special
                      ;; case where we should default to php indentation as if we
                      ;; were inside the braces
@@ -137,28 +146,28 @@
                         (and
                          (not (re-search-forward "^ *<" (line-end-position) t))
                          (re-search-forward "}> *$" (line-end-position) t)))
-                      (xhp-indent-debug "terminating php block")
-                      (list nil 'xhp-indent-in-mutiline-php-in-xhp-block))
+                      (hack-xhp-indent-debug "terminating php block")
+                      (list nil 'hack-xhp-indent-in-mutiline-php-in-xhp-block))
                      ;; CASE 2: user is indenting a closing block, so out-dent
                      ;; e.g.
                      ;; <div>
                      ;; </div>
                      ((save-excursion
                         (re-search-forward "^ *</" (line-end-position) t))
-                      (list (+ base-indent -2) 'xhp-indent-in-closing-elt))
+                      (list (+ base-indent -2) 'hack-xhp-indent-in-closing-elt))
                      ;; CASE 3: if this happens to be /> on its own
                      ;; line, reduce indent (coding standard)
                      ((save-excursion
                         (goto-char max)
                         (re-search-forward "^ */> *" (line-end-position) t))
-                      (list (+ base-indent -2) 'xhp-indent-in-closing-stmt))
+                      (list (+ base-indent -2) 'hack-xhp-indent-in-closing-stmt))
                      ;; CASE 4: close of xhp passed to a function, e.g.
                      ;; foo(
                      ;;   <xhp>
                      ;; );
                      ((save-excursion
                         (re-search-forward "^ *);" (line-end-position) t))
-                      (list (+ base-indent -2) 'xhp-indent-in-closing-stmt))
+                      (list (+ base-indent -2) 'hack-xhp-indent-in-closing-stmt))
                      ;; DEFAULT: no modification.
                      (t (list base-indent))))
               ;; already determined we're in xhp, if we have a
@@ -167,8 +176,8 @@
                    single-line-php-brace-pos
                    min-brace
                    (< min-brace single-line-php-brace-pos))
-                  (setq res (append res '(xhp-indent-php-in-xhp))))
-              (append res '(xhp-indent-in-xhp) (list 'xhp-start-pos xhp-start-pos))
+                  (setq res (append res '(hack-xhp-indent-php-in-xhp))))
+              (append res '(hack-xhp-indent-in-xhp) (list 'xhp-start-pos xhp-start-pos))
               ))
         ;; STEP 2.2: FIRST STATEMENT AFTER XHP. if we're after
         ;; the close of an xhp statement it still messes up the php
@@ -201,54 +210,38 @@
              ((looking-at ".*: *$") -4)
              ;; DEFAULT
              (t -2)))
-           'xhp-indent-in-first-statement-after-xhp)
+           'hack-xhp-indent-in-first-statement-after-xhp)
           )
          ;; DEFAULT: not first stmt after xhp, let c-indent figure
          ;; this out normally
-         (t (list nil 'xhp-indent-in-php)))
+         (t (list nil 'hack-xhp-indent-in-php)))
         )
       )))
 
-(defun xhp-indent-syntax-detect ()
-  "emacs' built in syntax checking can only handle one or two character values for determining indentation. This function provides a more expensive way to detect indentation for contexts where the builtin syntax checking fails. There are currently two cases for this:
-- inside xhp
-- inside heredoc (not handled)
-
-returns a list of (indent-amount syntax-infos ...)
-"
-   (xhp-indent-xhp-detect))
-
-(defun xhp-indent-syntax-indent-amount (syntax)
-  (car syntax))
-
-(defun xhp-indent-syntax-has-attribute (syntax attribute)
+(defun hack-xhp-indent-syntax-has-attribute (syntax attribute)
   (or
-   (not xhp-indent-debug-on)
-   (memq attribute xhp-indent-syntax-attributes) ;; perf issue
+   (not hack-xhp-indent-debug-on)
+   (memq attribute hack-xhp-indent-syntax-attributes) ;; perf issue
    (error "invalid attribute %s" (symbol-name attribute)))
   (memq attribute (cdr syntax)))
 
-(defun xhp-indent-start-pos (&optional xhp-indent-info)
-  "helper for getting start position attribute from `xhp-indent-xhp-detect result"
-  (cadr (xhp-indent-syntax-has-attribute
-        (or xhp-indent-info (xhp-indent-xhp-detect)) 'xhp-start-pos)))
+(defun hack-xhp-indent-start-pos (&optional hack-xhp-indent-info)
+  "helper for getting start position attribute from `hack-xhp-indent-xhp-detect result"
+  (cadr (hack-xhp-indent-syntax-has-attribute
+        (or hack-xhp-indent-info (hack-xhp-indent-xhp-detect)) 'xhp-start-pos)))
 
-(defun xhp-indent-in-xhp ()
+(defun hack-xhp-indent-in-xhp ()
   (interactive)
   "helper for detecting if point is in xhp"
-  (xhp-indent-syntax-has-attribute (xhp-indent-xhp-detect) 'xhp-indent-in-xhp))
+  (hack-xhp-indent-syntax-has-attribute (hack-xhp-indent-xhp-detect) 'hack-xhp-indent-in-xhp))
 
-(defun xhp-indent-detect ()
-  (interactive)
-  (xhp-indent-syntax-indent-amount (xhp-indent-syntax-detect)))
-
-(defun xhp-indent ()
+(defun hack-xhp-indent ()
   (interactive)
   (let
-      ((indent (xhp-indent-detect)))
+      ((indent (car (hack-xhp-indent-xhp-detect))))
     (if indent
         (progn
-          (xhp-indent-debug "xhp indent!!!")
+          (hack-xhp-indent-debug "xhp indent!!!")
           ;; this is better than indent-to and indent-line-to because
           ;; it sets the point properly in a few different contexts.
           ;; e.g. when you've typed stuff, keep the point
@@ -257,68 +250,47 @@ returns a list of (indent-amount syntax-infos ...)
           ))
     indent))
 
-(defun xhp-indent-cautious-indent-line ()
+(defun hack-xhp-indent-cautious-indent-line ()
   "call xhp indent, or fallback to c-indent if not applicable"
-  (if (not (xhp-indent))
+  (if (not (hack-xhp-indent))
       (funcall 'c-indent-line)))
 
-(defun xhp-indent-line ()
+(defun hack-xhp-indent-line ()
   "Indent current line."
   (interactive (list current-prefix-arg (use-region-p)))
-  (xhp-indent-cautious-indent-line))
+  (hack-xhp-indent-cautious-indent-line))
 
-;; Electric keys: override the built in C ones to use xhp-indent
+;; Electric keys: override the built in C ones to use hack-xhp-indent
 
-(defun xhp-indent-keybinds ()
-  (local-set-key ";" 'xhp-indent-electric-semi&comma)
-  (local-set-key "," 'xhp-indent-electric-semi&comma)
-  (local-set-key "}" 'xhp-indent-electric-brace)
-  (local-set-key "{" 'xhp-indent-electric-brace)
-  (local-set-key ":" 'xhp-indent-electric-colon)
+(defun hack-xhp-indent-keybinds ()
+  "Setup XHP-specific electric keys."
+  (local-set-key ";" 'hack-xhp-indent-electric-semi&comma)
+  (local-set-key "," 'hack-xhp-indent-electric-semi&comma)
+  (local-set-key "}" 'hack-xhp-indent-electric-brace)
+  (local-set-key "{" 'hack-xhp-indent-electric-brace)
+  (local-set-key ":" 'hack-xhp-indent-electric-colon)
 )
 
-(defun xhp-indent-electric-semi&comma (arg)
+(defun hack-xhp-indent-electric-semi&comma (arg)
+  "Indent XHP on ; or , or do cc-mode indent if not in XHP."
   (interactive "*P")
-  (if (and c-electric-flag (xhp-indent))
+  (if (and c-electric-flag (hack-xhp-indent))
       (self-insert-command (prefix-numeric-value arg))
     (c-electric-semi&comma arg)))
 
-(defun xhp-indent-electric-brace (arg)
+(defun hack-xhp-indent-electric-brace (arg)
+  "Indent XHP on { or } or do cc-mode indent if not in XHP."
   (interactive "*P")
-  (if (and c-electric-flag (xhp-indent))
+  (if (and c-electric-flag (hack-xhp-indent))
       (self-insert-command (prefix-numeric-value arg))
     (c-electric-brace arg)))
 
-(defun xhp-indent-electric-colon (arg)
+(defun hack-xhp-indent-electric-colon (arg)
+  "Indent XHP on : or do cc-mode indent if not in XHP."
   (interactive "*P")
-  (if (and c-electric-flag (xhp-indent))
+  (if (and c-electric-flag (hack-xhp-indent))
       (self-insert-command (prefix-numeric-value arg))
     (c-electric-colon arg)))
 
-;; TODOS
-;; arrays with xhp:
-;; 'foo' =>
-;;   <div>
-;;     ...
-;;   </div>,
-;; 'bar'
-;; php in xhp:
-;; <ui:link
-;;   href={$app->getAppCenterURL()}>
-;;   {
-;;     $this->getChildren()
-;;       }
-;; </ui:link>;
-;; <br/> not on its own line:
-;;; RunKeeper on your timeline<br/>
-;;; <foo>
-;; fails:
-;; id(
-;;   <fbt
-;;     secret="appcenter"
-;;     desc="platform type topnav filter, appcenter">
-;;     All
-;;   </fbt>
-;; ), <= right here
-(provide 'xhp-indent)
-;;; xhp-indent.el ends here
+(provide 'hack-xhp-indent)
+;;; hack-xhp-indent.el ends here
