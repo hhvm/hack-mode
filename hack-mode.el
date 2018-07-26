@@ -391,7 +391,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
          "static" "const" "global"
          "final" "async"
 
-         "attribute"
+         "attribute" "children"
          )
   )
 
