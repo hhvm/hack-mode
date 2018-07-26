@@ -43,7 +43,7 @@
     hack-xhp-indent-in-xhp))
 
 (defun hack-xhp-indent-debug (&rest args)
-  "Log ARGS if hack-xhp-indent-debug-on is set."
+  "Log ARGS if ‘hack-xhp-indent-debug-on’ is set."
   (if hack-xhp-indent-debug-on
       (apply 'message args)))
 
@@ -70,7 +70,7 @@ Argument MIN Minimum point to search to."
 ;; perform worse than 500 in a test file, but seems more than
 ;; sufficient to encompass a single xhp statement
 (defconst hack-xhp-indent-max-backtrack 1000
-  "Maximum distance to search backwards in hack-xhp-indent.")
+  "Maximum distance to search backwards in ‘hack-xhp-indent’.")
 
 (defun hack-xhp-indent-xhp-detect ()
   "Determine if xhp around or above point will affect indentation."
@@ -218,24 +218,22 @@ Argument MIN Minimum point to search to."
         )
       )))
 
-(defun hack-xhp-indent-syntax-has-attribute (syntax attribute)
+(defun hack-xhp-indent-syntax-has-attribute (syntax)
+  "Helper for detecting if point is in XHP.
+Argument SYNTAX Set of syntax attributes."
   (or
    (not hack-xhp-indent-debug-on)
    (memq attribute hack-xhp-indent-syntax-attributes) ;; perf issue
-   (error "invalid attribute %s" (symbol-name attribute)))
-  (memq attribute (cdr syntax)))
-
-(defun hack-xhp-indent-start-pos (&optional hack-xhp-indent-info)
-  "helper for getting start position attribute from `hack-xhp-indent-xhp-detect result"
-  (cadr (hack-xhp-indent-syntax-has-attribute
-        (or hack-xhp-indent-info (hack-xhp-indent-xhp-detect)) 'xhp-start-pos)))
+   (error "Invalid attribute %s" (symbol-name 'hack-xhp-indent-in-xhp)))
+  (memq 'hack-xhp-indent-in-xhp (cdr syntax)))
 
 (defun hack-xhp-indent-in-xhp ()
+  "Helper for detecting if point is in XHP."
   (interactive)
-  "helper for detecting if point is in xhp"
   (hack-xhp-indent-syntax-has-attribute (hack-xhp-indent-xhp-detect) 'hack-xhp-indent-in-xhp))
 
 (defun hack-xhp-indent ()
+  "Perform XHP indentation if appropriate."
   (interactive)
   (let
       ((indent (car (hack-xhp-indent-xhp-detect))))
@@ -251,7 +249,7 @@ Argument MIN Minimum point to search to."
     indent))
 
 (defun hack-xhp-indent-cautious-indent-line ()
-  "call xhp indent, or fallback to c-indent if not applicable"
+  "Call xhp indent, or fallback to c-indent if not applicable."
   (if (not (hack-xhp-indent))
       (funcall 'c-indent-line)))
 
@@ -272,21 +270,24 @@ Argument MIN Minimum point to search to."
 )
 
 (defun hack-xhp-indent-electric-semi&comma (arg)
-  "Indent XHP on ; or , or do cc-mode indent if not in XHP."
+  "Indent XHP on ; or , or do cc-mode indent if not in XHP.
+Argument ARG universal argument."
   (interactive "*P")
   (if (and c-electric-flag (hack-xhp-indent))
       (self-insert-command (prefix-numeric-value arg))
     (c-electric-semi&comma arg)))
 
 (defun hack-xhp-indent-electric-brace (arg)
-  "Indent XHP on { or } or do cc-mode indent if not in XHP."
+  "Indent XHP on { or } or do cc-mode indent if not in XHP.
+Argument ARG universal argument."
   (interactive "*P")
   (if (and c-electric-flag (hack-xhp-indent))
       (self-insert-command (prefix-numeric-value arg))
     (c-electric-brace arg)))
 
 (defun hack-xhp-indent-electric-colon (arg)
-  "Indent XHP on : or do cc-mode indent if not in XHP."
+  "Indent XHP on : or do cc-mode indent if not in XHP.
+Argument ARG universal argument."
   (interactive "*P")
   (if (and c-electric-flag (hack-xhp-indent))
       (self-insert-command (prefix-numeric-value arg))
