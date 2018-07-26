@@ -186,7 +186,7 @@
          ((save-excursion
             (c-backward-syntactic-ws)
             (and
-             (looking-back "\\(/>\\|</.*>\\);")
+             (looking-back "\\(/>\\|</.*>\\);" nil)
              ;; don't match single-line xhp $foo = <x:frag />;
              (not (re-search-backward "^ *\\$" (line-beginning-position) t))))
           ;; previous statement IS xhp. check what user has typed so

@@ -22,8 +22,8 @@
 
 ;;; Commentary:
 ;;
-;; Implements `hack-mode' for the Hack programming language. This
-;; includes basic support highlighting and indentation. Advanced
+;; Implements `hack-mode' for the Hack programming language.  This
+;; includes basic support highlighting and indentation.  Advanced
 ;; integrations, such as xref, better region formatting, and flycheck
 ;; support are provided by `lsp-hack' which is loaded by default
 ;; here.
@@ -44,7 +44,7 @@
   :group 'languages)
 
 (defcustom hack-client-program-name "hh_client"
-  "The command to run to communicate with hh_server"
+  "The command to run to communicate with hh_server."
   :group 'hack-mode)
 
 (eval-and-compile
@@ -268,17 +268,16 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
          ))
 
 (defun hack-font-lock-enum-tail (limit)
-  ;; Fontify an enum's identifiers when POINT is within the enum's brace
-  ;; block.
-  ;;
-  ;; This function will be called from font-lock for a region bounded by POINT
-  ;; and LIMIT, as though it were to identify a keyword for
-  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
-  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
-  ;; Fontification".
-  ;;
-  ;; NOTE: this is modified from cc-fonts to support that entries in
-  ;; Hack enums are separated by ; rather than ,
+  "Fontify an enum's identifiers when POINT is within the enum's brace block.
+
+  This function will be called from font-lock for a region bounded by POINT
+  and LIMIT, as though it were to identify a keyword for
+  ‘font-lock-keyword-face’.  It always returns NIL to inhibit this and
+  prevent a repeat invocation.  See elisp/lispref page 'Search-based
+  Fontification'.
+
+  NOTE: this is modified from cc-fonts to support that entries in
+  Hack enums are separated by ; rather than ,"
   (let* ((paren-state (c-parse-state))
          (encl-pos (c-most-enclosing-brace paren-state)))
     (when (and
@@ -502,8 +501,8 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
     "__IsFoldable"
     "__Native"
     )
-  "*List of extra types (aside from the type keywords) to recognize in hack mode.
-   Each list item should be a regexp matching a single identifier."
+  "*List of extra types (aside from the type keywords) in hack mode.
+Each list item should be a regexp matching a single identifier."
   :group 'hack-mode
   :type 'list
   )
@@ -540,7 +539,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   "Default expressions to highlight in hack mode.")
 
 (defvar hack-mode-syntax-table nil
-  "Syntax table used in hack-mode buffers.")
+  "Syntax table used in ‘hack-mode’ buffers.")
 (or hack-mode-syntax-table
     (setq hack-mode-syntax-table
           (let ((table (funcall (c-lang-const c-make-mode-syntax-table hack))))
@@ -579,7 +578,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
             table)))
 
 (defvar hack-mode-abbrev-table nil
-  "Abbreviation table used in hack-mode buffers.")
+  "Abbreviation table used in ‘hack-mode’ buffers.")
 (c-define-abbrev-table 'hack-mode-abbrev-table
   ;; Use the abbrevs table to trigger indentation actions
   ;; on keywords that, if they occur first on a line, might alter the
@@ -592,7 +591,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
     ("finally" "finally" c-electric-continued-statement 0)))
 
 (defvar hack-mode-map ()
-  "Keymap used in hack-mode buffers.")
+  "Keymap used in ‘hack-mode’ buffers.")
 (if hack-mode-map
     nil
   (setq hack-mode-map (c-make-inherited-keymap))
@@ -605,11 +604,15 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   )
 
 (defun hack-lineup-arglist-intro (langelem)
+  "Indent code at the beginning of function arglists.
+Argument LANGELEM the location of the start of the arglist"
   (save-excursion
     (goto-char (cdr langelem))
     (vector (+ (current-column) c-basic-offset))))
 
 (defun hack-lineup-arglist-close (langelem)
+  "Indent code at the close of function arglists.
+Argument LANGELEM the location of the close of the arglist"
   (save-excursion
     (goto-char (cdr langelem))
     (vector (current-column))))
@@ -621,7 +624,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
                         (arglist-intro . hack-lineup-arglist-intro)
                         (arglist-close . hack-lineup-arglist-close)
                         )))
-  "Default Hack Programming style")
+  "Default Hack Programming style.")
 (c-add-style "hack" hack-style)
 
 ;; hh_server can choke if you symlink your www root
