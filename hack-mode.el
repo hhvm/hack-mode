@@ -86,11 +86,12 @@
 (c-lang-defconst c-opt-cpp-start
   hack "<\\?\\(?:php\\|hh\\)\\s-*?")
 
+;; TODO, special fontification
+;; Hack treats comments of the forms // strict and // FALLTHROUGH in a special way.
+
 (c-lang-defconst c-basic-matchers-before
   hack
-  `(
-
-    ;; Fontify keyword constants.
+  `(;; Fontify keyword constants.
     ,@(when (c-lang-const c-constant-kwds)
         (let ((re (c-make-keywords-re nil (c-lang-const c-constant-kwds))))
           `((eval . (list ,(concat "\\<\\(" re "\\)\\>")
@@ -364,13 +365,9 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
          "namespace"))
 
 (c-lang-defconst c-modifier-kwds
-  hack '("abstract" "public" "private" "protected"  ;; put these in protection-kwds
-         "static" "const" "global"
-         "final" "async"
-
-         "attribute" "children"
-         )
-  )
+  hack '("abstract" "static" "const" "global" "final" "async"
+         ;; XHP stuff... not sure if there is a better option
+         "attribute" "children"))
 
 (c-lang-defconst c-protection-kwds
   hack '("public" "private" "protected"))
@@ -389,7 +386,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   hack '("enum" "function"))
 
 (c-lang-defconst c-paren-nontype-kwds
-  hack '("exit" "die" "declare" "self"))
+  hack '("exit" "die" "self"))
 
 (c-lang-defconst c-block-stmt-1-kwds
   ;; Statement keywords followed directly by a substatement.
@@ -403,7 +400,6 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   hack '("break" "continue" "return" "yield" "namespace" "echo"
          "include" "include_once"
          "require" "require_once"
-
          "await"
          ))
 
@@ -443,7 +439,6 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
          "E_USER_ERROR" "E_USER_NOTICE" "E_USER_WARNING" "E_WARNING"
          "E_USER_DEPRECATED" "INF" "M_E" "M_PI" "NAN" "PHP_EOL"
          "PHP_INT_MAX" "PHP_INT_MIN" "PHP_INT_SIZE"))
-
 
 (c-lang-defconst c-inexpr-block-kwds
   hack '("function" ;; Classic PHP anonymous functions
