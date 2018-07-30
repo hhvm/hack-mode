@@ -141,12 +141,11 @@
 on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 
   hack `(
-
       ;; Fontify all type names and the identifiers in the
       ;; declarations they might start.  Use eval here since
       ;; `c-known-type-key' gets its value from
       ;; `*-font-lock-extra-types' on mode init.
-      (eval . (list ,(c-make-font-lock-search-function           ;; TODO, don't fontify the damn dollars
+      (eval . (list ,(c-make-font-lock-search-function
                       'c-known-type-key
                       '(1 'font-lock-type-face t)
                       '((c-font-lock-declarators limit t nil)
@@ -227,28 +226,6 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
          ;;                                   'c-decl-id-start)
          ;;              (c-forward-syntactic-ws))
          ;;            (goto-char (match-end 0)))))))
-
-         ;; Fontify labels after goto etc.
-         ,@(when (c-lang-const c-before-label-kwds)
-             `(;; (Got three different interpretation levels here,
-               ;; which makes it a bit complicated: 1) The backquote
-               ;; stuff is expanded when compiled or loaded, 2) the
-               ;; eval form is evaluated at font-lock setup (to
-               ;; substitute c-label-face-name correctly), and 3) the
-               ;; resulting structure is interpreted during
-               ;; fontification.)
-               (eval
-                . ,(let* ((c-before-label-re
-                           (c-make-keywords-re nil
-                             (c-lang-const c-before-label-kwds))))
-                     `(list
-                       ,(concat "\\<\\(" c-before-label-re "\\)\\>"
-                                "\\s *"
-                                "\\("	; identifier-offset
-                                (c-lang-const c-symbol-key)
-                                "\\)")
-                       (list ,(+ (regexp-opt-depth c-before-label-re) 2)
-                             c-label-face-name nil t))))))
 
          ;; Fontify the clauses after various keywords.
          ,@(when (or (c-lang-const c-type-list-kwds)
@@ -423,7 +400,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   hack '("for" "if" "elseif" "while" "switch" "foreach" "catch"))
 
 (c-lang-defconst c-simple-stmt-kwds
-  hack '("break" "continue" "goto" "return" "yield" "namespace" "echo"
+  hack '("break" "continue" "return" "yield" "namespace" "echo"
          "include" "include_once"
          "require" "require_once"
 
@@ -446,9 +423,9 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   ;; Keywords introducing colon terminated labels in blocks.
   hack '("case" "default"))
 
-(c-lang-defconst c-before-label-kwds
-  ;; Keywords that might be followed by a label identifier.
-  hack '("goto" "break" "continue"))
+
+;; Hack does not support goto, continue n, or break n.
+(c-lang-defconst c-before-label-kwds hack '())
 
 (c-lang-defconst c-constant-kwds
   ;; Keywords for constants.
