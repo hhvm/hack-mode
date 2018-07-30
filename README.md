@@ -8,6 +8,10 @@ Load this package into your elisp load-path.
 ```emacs-lisp
 (require 'hack-mode)
 
-; hh_server can choke if you are using symlinks
-(setq find-file-visit-truename t)
+;; Turn on all the cool LSP features!
+(add-hook
+  'hack-mode-hook
+  (lambda ()
+    (flycheck-mode t)
+    (company-mode t))))
 ```
