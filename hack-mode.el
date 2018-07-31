@@ -582,6 +582,17 @@ Argument LANGELEM the location of the start of the arglist"
     (goto-char (cdr langelem))
     (vector (+ (current-column) c-basic-offset))))
 
+(defun hack-lineup-arglist-cont (langelem)
+  "Indent code at the beginning of function arglists.
+Argument LANGELEM the location of the start of the arglist"
+  (save-excursion
+    (back-to-indentation)  ;; first non-whitespace char
+    (let ((fn-cont (looking-at "->")))
+      (goto-char (cdr langelem))
+      (if fn-cont
+          (vector (+ (current-column) c-basic-offset))
+        (vector (current-column))))))
+
 (defun hack-lineup-arglist-close (langelem)
   "Indent code at the close of function arglists.
 Argument LANGELEM the location of the close of the arglist"
@@ -594,6 +605,7 @@ Argument LANGELEM the location of the close of the arglist"
     (c-offsets-alist . ((stream-op . 0) ;; << and >> are not stream ops...
                         (access-label . 0)
                         (arglist-intro . hack-lineup-arglist-intro)
+                        (arglist-cont . hack-lineup-arglist-cont)
                         (arglist-close . hack-lineup-arglist-close)
                         )))
   "Default Hack Programming style.")
