@@ -583,7 +583,7 @@ Argument LANGELEM the location of the start of the arglist"
     (vector (+ (current-column) c-basic-offset))))
 
 (defun hack-lineup-arglist-cont (langelem)
-  "Indent code at the beginning of function arglists.
+  "Indent chained function calls inside of arg lists
 Argument LANGELEM the location of the start of the arglist"
   (save-excursion
     (back-to-indentation)  ;; first non-whitespace char
