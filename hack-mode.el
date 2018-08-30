@@ -613,17 +613,8 @@ Argument LANGELEM the location of the close of the arglist"
 ;;;###autoload
 (define-derived-mode hack-mode c-mode "Hack"
   "A major mode for Hack files\n\n\\{hack-mode-map}"
-  (kill-all-local-variables)
-
   (c-initialize-cc-mode t)
-  (set-syntax-table hack-mode-syntax-table)
-  (setq major-mode 'hack-mode
-        mode-name "Hack"
-        local-abbrev-table hack-mode-abbrev-table
-        abbrev-mode t)
-  (use-local-map hack-mode-map)
   (c-init-language-vars hack-mode)
-
   (c-common-init 'hack-mode)
   (run-hooks 'c-mode-common-hook)
 
