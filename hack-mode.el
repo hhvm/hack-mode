@@ -17,21 +17,17 @@
 
 ;; Author: John Allen <jallen@fb.com>
 ;; Version: 1.0.0
-;; Package-Requires: ((lsp-hack "1.1.3") (emacs "25.1"))
+;; Package-Requires: ((emacs "25.1"))
 ;; URL: https://github.com/hhvm/hack-mode
 
 ;;; Commentary:
 ;;
 ;; Implements `hack-mode' for the Hack programming language.  This
-;; includes basic support highlighting and indentation.  Advanced
-;; integrations, such as xref, better region formatting, and flycheck
-;; support are provided by `lsp-hack' which is loaded by default
-;; here.
+;; includes basic support for highlighting and indentation.
 ;;
 
 ;;; Code:
 (require 'hack-xhp-indent)
-(require 'lsp-hack)
 (require 'font-lock)
 (require 'cc-mode)
 (require 'cc-langs)
@@ -628,20 +624,15 @@ Argument LANGELEM the location of the close of the arglist"
   (use-local-map hack-mode-map)
   (c-init-language-vars hack-mode)
 
-  (setq font-lock-maximum-decoration t)
-  (setq-local case-fold-search t)
-  (setq-local compile-command (concat hack-client-program-name " --from emacs"))
-
-  (add-hook 'hack-mode-hook
-            (lambda ()
-              (c-set-style "hack")
-              ;; Regions can be indented using LSP, lines cannot, yet
-              (set (make-local-variable 'indent-line-function)
-                   #'hack-xhp-indent-line)
-              ))
-
   (c-common-init 'hack-mode)
   (run-hooks 'c-mode-common-hook)
+
+  (c-set-style "hack")
+  (setq-local font-lock-maximum-decoration t)
+  (setq-local case-fold-search t)
+  (setq-local compile-command (concat hack-client-program-name " --from emacs"))
+  (setq-local indent-line-function #'hack-xhp-indent-line)
+
   (run-hooks 'hack-mode-hook)
   (c-update-modeline)
   )
