@@ -614,10 +614,6 @@ Argument LANGELEM the location of the close of the arglist"
 ;; hh_server can choke if you symlink your www root
 (setq find-file-visit-truename t)
 
-;;;###autoload (add-to-list 'auto-mode-alist '("\\.php\\'" . hack-mode))
-
-;;;###autoload (add-to-list 'auto-mode-alist '("\\.hhi\\'" . hack-mode))
-
 ;;;###autoload
 (define-derived-mode hack-mode c-mode "Hack"
   "A major mode for Hack files\n\n\\{hack-mode-map}"
