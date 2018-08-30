@@ -635,8 +635,6 @@ Argument LANGELEM the location of the close of the arglist"
   (add-hook 'hack-mode-hook
             (lambda ()
               (c-set-style "hack")
-              ;; Enable lsp
-              (lsp-hack-enable)
               ;; Regions can be indented using LSP, lines cannot, yet
               (set (make-local-variable 'indent-line-function)
                    #'hack-xhp-indent-line)

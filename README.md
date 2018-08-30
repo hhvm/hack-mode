@@ -12,10 +12,11 @@ Load this package into your elisp load-path.
 (add-to-list 'auto-mode-alist '("\\.php\\'" . hack-mode))
 (add-to-list 'auto-mode-alist '("\\.hhi\\'" . hack-mode))
 
-;; Turn on all the cool LSP features!
 (add-hook
   'hack-mode-hook
   (lambda ()
+    ;; Turn on all the cool LSP features!
+    (lsp-hack-enable)
     (flycheck-mode t)
     (company-mode t))))
 ```
