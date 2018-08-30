@@ -616,15 +616,14 @@ Argument LANGELEM the location of the close of the arglist"
   (c-initialize-cc-mode t)
   (c-init-language-vars hack-mode)
   (c-common-init 'hack-mode)
-  (run-hooks 'c-mode-common-hook)
 
-  (c-set-style "hack")
   (setq-local font-lock-maximum-decoration t)
   (setq-local case-fold-search t)
   (setq-local compile-command (concat hack-client-program-name " --from emacs"))
   (setq-local indent-line-function #'hack-xhp-indent-line)
+  (c-set-style "hack")
 
-  (run-hooks 'hack-mode-hook)
+  (c-run-mode-hooks 'c-mode-common-hook 'hack-mode-hook)
   (c-update-modeline)
   )
 
