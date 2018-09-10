@@ -47,6 +47,15 @@
   (if hack-xhp-indent-debug-on
       (apply 'message args)))
 
+(defun hack-xhp-in-code-p ()
+  "Return non-nil if point is currently in code,
+i.e. not in a comment or string."
+  (let* ((ppss (syntax-ppss))
+         (in-string (nth 3 ppss))
+         (in-comment (nth 4 ppss)))
+    (and (not in-comment)
+         (not in-string))))
+
 (defun hack-xhp-indent-previous-semi (min)
   "Helper for finding the previous semicolon not in a string or comment.
 Argument MIN Minimum point to search to."
@@ -54,17 +63,18 @@ Argument MIN Minimum point to search to."
       (setq min (point-min)))
   (if (> min (point))
       nil ;; search/re-search error if this is true. stupid
-    (let
-        ((res))
+    (let (res
+          (keep-going t))
       (save-excursion
-        (while
-            (if (search-backward ";" min t)
-                (if (c-in-literal min)
-                    t ;; keep searching
-                  (setq res (point)) ;; semi found, done.
-                  nil)))
-        res))))
+        (while keep-going
+          (setq keep-going nil)
 
+          (when (search-backward ";" min t)
+            (if (hack-xhp-in-code-p)
+                (setq keep-going t)
+              ;; semi found, done.
+              (setq res (point)))))
+        res))))
 
 ;; 1000 was chosen somewhat arbitrarily in that it didn't seem to
 ;; perform worse than 500 in a test file, but seems more than
@@ -72,10 +82,26 @@ Argument MIN Minimum point to search to."
 (defconst hack-xhp-indent-max-backtrack 1000
   "Maximum distance to search backwards in ‘hack-xhp-indent’.")
 
+(defun hack-xhp-backward-whitespace ()
+  "Move backwards until point is not on whitespace."
+  (catch 'done
+    (while t
+      (when (bobp)
+        (throw 'done nil))
+
+      (let ((prev-char (char-after (1- (point))))
+            (prev-syntax (syntax-after (1- (point)))))
+        (unless (or (eq prev-char ?\n)
+                    ;; 0 is the syntax code for whitespace.
+                    (eq 0 (car-safe prev-syntax)))
+          (throw 'done nil)))
+
+      (backward-char))))
+
 (defun hack-xhp-indent-xhp-detect ()
   "Determine if xhp around or above point will affect indentation."
   (save-excursion
-    (c-save-buffer-state
+    (let*
         (
          (single-line-php-brace-pos (c-most-enclosing-brace (c-parse-state)))
          (min-brace
@@ -99,7 +125,7 @@ Argument MIN Minimum point to search to."
         (if (and
              (> (point) min)
              (re-search-backward hack-xhp-indent-start-regex min t)
-             (not (c-in-literal)))
+             (hack-xhp-in-code-p))
             (setq
              xhp-start-pos (point)
              base-indent
@@ -193,7 +219,7 @@ Argument MIN Minimum point to search to."
          ;;  ...
          ;; </div>;
          ((save-excursion
-            (c-backward-syntactic-ws)
+            (hack-xhp-backward-whitespace)
             (and
              (looking-back "\\(/>\\|</.*>\\);" nil)
              ;; don't match single-line xhp $foo = <x:frag />;
@@ -202,7 +228,7 @@ Argument MIN Minimum point to search to."
           ;; far
           (list
            (+
-            (save-excursion (c-backward-syntactic-ws) (current-indentation))
+            (save-excursion (hack-xhp-backward-whitespace) (current-indentation))
             (cond
              ;; CASE 0: user typed a brace. outdent even more
              ((looking-at ".*}") -4)
@@ -248,15 +274,65 @@ Argument SYNTAX Set of syntax attributes."
           ))
     indent))
 
-(defun hack-xhp-indent-cautious-indent-line ()
-  "Call xhp indent, or fallback to c-indent if not applicable."
-  (if (not (hack-xhp-indent))
-      (funcall 'c-indent-line)))
+(defun hack-indent-line ()
+  "Indent the current line of Hack code.
+Preserves point position in the line where possible."
+  (interactive)
+  (let* ((point-offset (- (current-column) (current-indentation)))
+         (ppss (syntax-ppss (line-beginning-position)))
+         (paren-depth (nth 0 ppss))
+         (current-paren-pos (nth 1 ppss))
+         (text-after-paren
+          (when current-paren-pos
+            (save-excursion
+              (goto-char current-paren-pos)
+              (buffer-substring
+               (1+ current-paren-pos)
+               (line-end-position)))))
+         (in-multiline-comment-p (nth 4 ppss))
+         (current-line (buffer-substring (line-beginning-position) (line-end-position))))
+    ;; If the current line is just a closing paren, unindent by one level.
+    (when (and
+           (not in-multiline-comment-p)
+           (string-match-p (rx bol (0+ space) (or ")" "}")) current-line))
+      (setq paren-depth (1- paren-depth)))
+    (cond
+     ;; In multiline comments, ensure the leading * is indented by one
+     ;; more space. For example:
+     ;; /*
+     ;;  * <- this line
+     ;;  */
+     (in-multiline-comment-p
+      ;; Don't modify lines that don't start with *, to avoid changing the indentation of commented-out code.
+      (when (or (string-match-p (rx bol (0+ space) "*") current-line)
+                (string= "" current-line))
+        (indent-line-to (1+ (* hack-indent-offset paren-depth)))))
+     ;; Indent according to the last paren position, if there is text
+     ;; after the paren. For example:
+     ;; foo(bar,
+     ;;     baz, <- this line
+     ((and
+       text-after-paren
+       (not (string-match-p (rx bol (0+ space) eol) text-after-paren)))
+      (let (open-paren-column)
+        (save-excursion
+          (goto-char current-paren-pos)
+          (setq open-paren-column (current-column)))
+        (indent-line-to (1+ open-paren-column))))
+     ;; Indent according to the amount of nesting.
+     (t
+      (indent-line-to (* hack-indent-offset paren-depth))))
+
+    ;; Point is now at the beginning of indentation, restore it
+    ;; to its original position (relative to indentation).
+    (when (>= point-offset 0)
+      (move-to-column (+ (current-indentation) point-offset)))))
 
 (defun hack-xhp-indent-line ()
   "Indent current line."
-  (interactive (list current-prefix-arg (use-region-p)))
-  (hack-xhp-indent-cautious-indent-line))
+  (interactive)
+  (if (not (hack-xhp-indent))
+      (hack-indent-line)))
 
 ;; Electric keys: override the built in C ones to use hack-xhp-indent
 
