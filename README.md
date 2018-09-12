@@ -1,22 +1,26 @@
-# hack-mode
+# hack-mode [![MELPA](http://melpa.org/packages/hack-mode-badge.svg)](http://melpa.org/#/hack-mode)
 A major-mode for [ Hack ](https://hacklang.org/) code.
 
 ## Installation
 
-Load this package into your elisp load-path.
+Install from MELPA, or load this package into your elisp load-path.
+
+## Configuration
+
+We recommend using hack-mode with the following minor-modes:
 
 ```emacs-lisp
-(require 'hack-mode)
+(add-hook 'hack-mode-hook #'lsp-hack-enable)
+(add-hook 'hack-mode-hook #'flycheck-mode)
+(add-hook 'hack-mode-hook #'company-mode)
+```
 
-;; Set up hack-mode for the relevant files
+## .php files
+
+If you have both `hack-mode` and `php-mode` installed, `php-mode` will
+be associated with `.php` files. To override this, add the following
+configuration:
+
+```emacs-lisp
 (add-to-list 'auto-mode-alist '("\\.php\\'" . hack-mode))
-(add-to-list 'auto-mode-alist '("\\.hhi\\'" . hack-mode))
-
-(add-hook
-  'hack-mode-hook
-  (lambda ()
-    ;; Turn on all the cool LSP features!
-    (lsp-hack-enable)
-    (flycheck-mode t)
-    (company-mode t))))
 ```
