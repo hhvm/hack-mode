@@ -267,15 +267,15 @@
 ;; Ensure that we use `hack-mode' for .php files, but put the
 ;; association at the end of the list so `php-mode' wins (if installed).
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.php$" . wh-hack-mode) t)
+(add-to-list 'auto-mode-alist '("\\.php$" . hack-mode) t)
 
 ;; These extensions are hack-specific.
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.hhi$" . wh-hack-mode))
+(add-to-list 'auto-mode-alist '("\\.hhi$" . hack-mode))
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.hack$" . wh-hack-mode))
+(add-to-list 'auto-mode-alist '("\\.hack$" . hack-mode))
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.hck$" . wh-hack-mode))
+(add-to-list 'auto-mode-alist '("\\.hck$" . hack-mode))
 
 ;;;###autoload
 (define-derived-mode hack-mode prog-mode "Hack"
