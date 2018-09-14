@@ -26,8 +26,6 @@
 
 ;;; Code:
 
-(require 'cc-mode)
-
 (defvar hack-xhp-indent-debug-on nil)
 
 (defvar hack-xhp-indent-start-regex "\\(return +\\|^ *\\|==> *\\|\\? *\\|= *\\|( *\\)<[^<\\]"
@@ -256,20 +254,25 @@ Argument SYNTAX Set of syntax attributes."
   (interactive)
   (hack-xhp-indent-syntax-has-attribute (hack-xhp-indent-xhp-detect) 'hack-xhp-indent-in-xhp))
 
+(defun hack-xhp-indent-preserve-point (offset)
+  "Indent the current line by OFFSET spaces.
+Ensure point is still on the same part of the line afterwards."
+  (let ((point-offset (- (current-column) (current-indentation))))
+    (indent-line-to offset)
+
+    ;; Point is now at the beginning of indentation, restore it
+    ;; to its original position (relative to indentation).
+    (when (>= point-offset 0)
+      (move-to-column (+ (current-indentation) point-offset)))))
+
 (defun hack-xhp-indent ()
   "Perform XHP indentation if appropriate."
   (interactive)
   (let
       ((indent (car (hack-xhp-indent-xhp-detect))))
-    (if indent
-        (progn
-          (hack-xhp-indent-debug "xhp indent!!!")
-          ;; this is better than indent-to and indent-line-to because
-          ;; it sets the point properly in a few different contexts.
-          ;; e.g. when you've typed stuff, keep the point
-          ;; but when you've typed nothing, go to end of line.
-          (c-shift-line-indentation (- indent (current-indentation)))
-          ))
+    (when indent
+      (hack-xhp-indent-debug "xhp indent!!!")
+      (hack-xhp-indent-preserve-point indent))
     indent))
 
 (defun hack-indent-line ()
@@ -304,7 +307,7 @@ Preserves point position in the line where possible."
       ;; Don't modify lines that don't start with *, to avoid changing the indentation of commented-out code.
       (when (or (string-match-p (rx bol (0+ space) "*") current-line)
                 (string= "" current-line))
-        (indent-line-to (1+ (* hack-indent-offset paren-depth)))))
+        (hack-xhp-indent-preserve-point (1+ (* hack-indent-offset paren-depth)))))
      ;; Indent according to the last paren position, if there is text
      ;; after the paren. For example:
      ;; foo(bar,
@@ -316,15 +319,10 @@ Preserves point position in the line where possible."
         (save-excursion
           (goto-char current-paren-pos)
           (setq open-paren-column (current-column)))
-        (indent-line-to (1+ open-paren-column))))
+        (hack-xhp-indent-preserve-point (1+ open-paren-column))))
      ;; Indent according to the amount of nesting.
      (t
-      (indent-line-to (* hack-indent-offset paren-depth))))
-
-    ;; Point is now at the beginning of indentation, restore it
-    ;; to its original position (relative to indentation).
-    (when (>= point-offset 0)
-      (move-to-column (+ (current-indentation) point-offset)))))
+      (hack-xhp-indent-preserve-point (* hack-indent-offset paren-depth))))))
 
 (defun hack-xhp-indent-line ()
   "Indent current line."
