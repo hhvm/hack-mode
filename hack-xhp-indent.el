@@ -26,8 +26,6 @@
 
 ;;; Code:
 
-(require 'cc-mode)
-
 (defvar hack-xhp-indent-debug-on nil)
 
 (defvar hack-xhp-indent-start-regex "\\(return +\\|^ *\\|==> *\\|\\? *\\|= *\\|( *\\)<[^<\\]"
@@ -76,12 +74,6 @@ Argument MIN Minimum point to search to."
               (setq res (point)))))
         res))))
 
-;; 1000 was chosen somewhat arbitrarily in that it didn't seem to
-;; perform worse than 500 in a test file, but seems more than
-;; sufficient to encompass a single xhp statement
-(defconst hack-xhp-indent-max-backtrack 1000
-  "Maximum distance to search backwards in ‘hack-xhp-indent’.")
-
 (defun hack-xhp-backward-whitespace ()
   "Move backwards until point is not on whitespace."
   (catch 'done
@@ -98,17 +90,21 @@ Argument MIN Minimum point to search to."
 
       (backward-char))))
 
+(defun hack-xhp-enclosing-brace-pos ()
+  "Return the position of the innermost enclosing brace before point."
+  (nth 1 (syntax-ppss)))
+
 (defun hack-xhp-indent-xhp-detect ()
   "Determine if xhp around or above point will affect indentation."
   (save-excursion
     (let*
         (
-         (single-line-php-brace-pos (c-most-enclosing-brace (c-parse-state)))
+         (single-line-php-brace-pos (hack-xhp-enclosing-brace-pos))
          (min-brace
           (progn
             ;; get out of anything being typed that might confuse the parsing
             (beginning-of-line) ;; SIDE EFFECT
-            (c-most-enclosing-brace (c-parse-state))))
+            (hack-xhp-enclosing-brace-pos)))
          (min (save-excursion
                 (or
                  (hack-xhp-indent-previous-semi min-brace)
@@ -244,7 +240,7 @@ Argument MIN Minimum point to search to."
         )
       )))
 
-(defun hack-xhp-indent-syntax-has-attribute (syntax)
+(defun hack-xhp-indent-syntax-has-attribute (syntax attribute)
   "Helper for detecting if point is in XHP.
 Argument SYNTAX Set of syntax attributes."
   (or
@@ -258,20 +254,25 @@ Argument SYNTAX Set of syntax attributes."
   (interactive)
   (hack-xhp-indent-syntax-has-attribute (hack-xhp-indent-xhp-detect) 'hack-xhp-indent-in-xhp))
 
+(defun hack-xhp-indent-preserve-point (offset)
+  "Indent the current line by OFFSET spaces.
+Ensure point is still on the same part of the line afterwards."
+  (let ((point-offset (- (current-column) (current-indentation))))
+    (indent-line-to offset)
+
+    ;; Point is now at the beginning of indentation, restore it
+    ;; to its original position (relative to indentation).
+    (when (>= point-offset 0)
+      (move-to-column (+ (current-indentation) point-offset)))))
+
 (defun hack-xhp-indent ()
   "Perform XHP indentation if appropriate."
   (interactive)
   (let
       ((indent (car (hack-xhp-indent-xhp-detect))))
-    (if indent
-        (progn
-          (hack-xhp-indent-debug "xhp indent!!!")
-          ;; this is better than indent-to and indent-line-to because
-          ;; it sets the point properly in a few different contexts.
-          ;; e.g. when you've typed stuff, keep the point
-          ;; but when you've typed nothing, go to end of line.
-          (c-shift-line-indentation (- indent (current-indentation)))
-          ))
+    (when indent
+      (hack-xhp-indent-debug "xhp indent!!!")
+      (hack-xhp-indent-preserve-point indent))
     indent))
 
 (defun hack-indent-line ()
@@ -306,7 +307,7 @@ Preserves point position in the line where possible."
       ;; Don't modify lines that don't start with *, to avoid changing the indentation of commented-out code.
       (when (or (string-match-p (rx bol (0+ space) "*") current-line)
                 (string= "" current-line))
-        (indent-line-to (1+ (* hack-indent-offset paren-depth)))))
+        (hack-xhp-indent-preserve-point (1+ (* hack-indent-offset paren-depth)))))
      ;; Indent according to the last paren position, if there is text
      ;; after the paren. For example:
      ;; foo(bar,
@@ -318,56 +319,16 @@ Preserves point position in the line where possible."
         (save-excursion
           (goto-char current-paren-pos)
           (setq open-paren-column (current-column)))
-        (indent-line-to (1+ open-paren-column))))
+        (hack-xhp-indent-preserve-point (1+ open-paren-column))))
      ;; Indent according to the amount of nesting.
      (t
-      (indent-line-to (* hack-indent-offset paren-depth))))
-
-    ;; Point is now at the beginning of indentation, restore it
-    ;; to its original position (relative to indentation).
-    (when (>= point-offset 0)
-      (move-to-column (+ (current-indentation) point-offset)))))
+      (hack-xhp-indent-preserve-point (* hack-indent-offset paren-depth))))))
 
 (defun hack-xhp-indent-line ()
   "Indent current line."
   (interactive)
   (if (not (hack-xhp-indent))
       (hack-indent-line)))
-
-;; Electric keys: override the built in C ones to use hack-xhp-indent
-
-(defun hack-xhp-indent-keybinds ()
-  "Setup XHP-specific electric keys."
-  (local-set-key ";" 'hack-xhp-indent-electric-semi&comma)
-  (local-set-key "," 'hack-xhp-indent-electric-semi&comma)
-  (local-set-key "}" 'hack-xhp-indent-electric-brace)
-  (local-set-key "{" 'hack-xhp-indent-electric-brace)
-  (local-set-key ":" 'hack-xhp-indent-electric-colon)
-)
-
-(defun hack-xhp-indent-electric-semi&comma (arg)
-  "Indent XHP on ; or , or do cc-mode indent if not in XHP.
-Argument ARG universal argument."
-  (interactive "*P")
-  (if (and c-electric-flag (hack-xhp-indent))
-      (self-insert-command (prefix-numeric-value arg))
-    (c-electric-semi&comma arg)))
-
-(defun hack-xhp-indent-electric-brace (arg)
-  "Indent XHP on { or } or do cc-mode indent if not in XHP.
-Argument ARG universal argument."
-  (interactive "*P")
-  (if (and c-electric-flag (hack-xhp-indent))
-      (self-insert-command (prefix-numeric-value arg))
-    (c-electric-brace arg)))
-
-(defun hack-xhp-indent-electric-colon (arg)
-  "Indent XHP on : or do cc-mode indent if not in XHP.
-Argument ARG universal argument."
-  (interactive "*P")
-  (if (and c-electric-flag (hack-xhp-indent))
-      (self-insert-command (prefix-numeric-value arg))
-    (c-electric-colon arg)))
 
 (provide 'hack-xhp-indent)
 ;;; hack-xhp-indent.el ends here
