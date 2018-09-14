@@ -76,12 +76,6 @@ Argument MIN Minimum point to search to."
               (setq res (point)))))
         res))))
 
-;; 1000 was chosen somewhat arbitrarily in that it didn't seem to
-;; perform worse than 500 in a test file, but seems more than
-;; sufficient to encompass a single xhp statement
-(defconst hack-xhp-indent-max-backtrack 1000
-  "Maximum distance to search backwards in ‘hack-xhp-indent’.")
-
 (defun hack-xhp-backward-whitespace ()
   "Move backwards until point is not on whitespace."
   (catch 'done
@@ -333,41 +327,6 @@ Preserves point position in the line where possible."
   (interactive)
   (if (not (hack-xhp-indent))
       (hack-indent-line)))
-
-;; Electric keys: override the built in C ones to use hack-xhp-indent
-
-(defun hack-xhp-indent-keybinds ()
-  "Setup XHP-specific electric keys."
-  (local-set-key ";" 'hack-xhp-indent-electric-semi&comma)
-  (local-set-key "," 'hack-xhp-indent-electric-semi&comma)
-  (local-set-key "}" 'hack-xhp-indent-electric-brace)
-  (local-set-key "{" 'hack-xhp-indent-electric-brace)
-  (local-set-key ":" 'hack-xhp-indent-electric-colon)
-)
-
-(defun hack-xhp-indent-electric-semi&comma (arg)
-  "Indent XHP on ; or , or do cc-mode indent if not in XHP.
-Argument ARG universal argument."
-  (interactive "*P")
-  (if (and c-electric-flag (hack-xhp-indent))
-      (self-insert-command (prefix-numeric-value arg))
-    (c-electric-semi&comma arg)))
-
-(defun hack-xhp-indent-electric-brace (arg)
-  "Indent XHP on { or } or do cc-mode indent if not in XHP.
-Argument ARG universal argument."
-  (interactive "*P")
-  (if (and c-electric-flag (hack-xhp-indent))
-      (self-insert-command (prefix-numeric-value arg))
-    (c-electric-brace arg)))
-
-(defun hack-xhp-indent-electric-colon (arg)
-  "Indent XHP on : or do cc-mode indent if not in XHP.
-Argument ARG universal argument."
-  (interactive "*P")
-  (if (and c-electric-flag (hack-xhp-indent))
-      (self-insert-command (prefix-numeric-value arg))
-    (c-electric-colon arg)))
 
 (provide 'hack-xhp-indent)
 ;;; hack-xhp-indent.el ends here
