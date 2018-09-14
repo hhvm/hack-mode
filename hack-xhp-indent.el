@@ -92,17 +92,21 @@ Argument MIN Minimum point to search to."
 
       (backward-char))))
 
+(defun hack-xhp-enclosing-brace-pos ()
+  "Return the position of the innermost enclosing brace before point."
+  (nth 1 (syntax-ppss)))
+
 (defun hack-xhp-indent-xhp-detect ()
   "Determine if xhp around or above point will affect indentation."
   (save-excursion
     (let*
         (
-         (single-line-php-brace-pos (c-most-enclosing-brace (c-parse-state)))
+         (single-line-php-brace-pos (hack-xhp-enclosing-brace-pos))
          (min-brace
           (progn
             ;; get out of anything being typed that might confuse the parsing
             (beginning-of-line) ;; SIDE EFFECT
-            (c-most-enclosing-brace (c-parse-state))))
+            (hack-xhp-enclosing-brace-pos)))
          (min (save-excursion
                 (or
                  (hack-xhp-indent-previous-semi min-brace)
