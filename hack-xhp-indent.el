@@ -240,7 +240,7 @@ Argument MIN Minimum point to search to."
         )
       )))
 
-(defun hack-xhp-indent-syntax-has-attribute (syntax)
+(defun hack-xhp-indent-syntax-has-attribute (syntax attribute)
   "Helper for detecting if point is in XHP.
 Argument SYNTAX Set of syntax attributes."
   (or
