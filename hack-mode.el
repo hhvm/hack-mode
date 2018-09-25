@@ -245,6 +245,9 @@
     ;; Treat + as punctuation.
     (modify-syntax-entry ?+ "." table)
 
+    ;; Treat & as punctuation.
+    (modify-syntax-entry ?& "." table)
+
     ;; Treat \ as punctuation, so we can navigate between different
     ;; parts of a namespace reference.
     (modify-syntax-entry ?\\ "." table)
