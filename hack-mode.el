@@ -17,7 +17,7 @@
 
 ;; Author: John Allen <jallen@fb.com>
 ;; Version: 1.0.0
-;; Package-Requires: ((emacs "25.1"))
+;; Package-Requires: ((emacs "25.1") (s "1.11.0"))
 ;; URL: https://github.com/hhvm/hack-mode
 
 ;;; Commentary:
@@ -28,6 +28,7 @@
 
 ;;; Code:
 (require 'hack-xhp-indent)
+(require 's)
 
 (defgroup hack nil
   "Major mode `hack-mode' for editing Hack code."
@@ -264,6 +265,98 @@
 
     table))
 
+(defun hack--comment-prefix (s)
+  "Extract the leading '* ' from '* foo'."
+  (when (string-match
+         (rx bol (0+ space) (? "/") "*" (1+ space))
+         s)
+    (match-string 0 s)))
+
+(defun hack--wrap-comment-inner (s)
+  "Given a string of the form:
+
+* a very long sentence here...
+
+wrap it to:
+
+* a very long
+* sentence here..."
+  (let* ((prefix (hack--comment-prefix s))
+         (lines (s-lines s))
+         (stripped-lines
+          (mapcar
+           (lambda (line) (s-chop-prefix prefix line))
+           lines)))
+    (with-temp-buffer
+      (insert (s-join "\n" stripped-lines))
+      (goto-char (point-min))
+      (fill-paragraph)
+
+      (let* ((wrapped-lines (s-lines (buffer-string)))
+             (prefixed-lines
+              (mapcar
+               (lambda (line) (concat prefix line))
+               wrapped-lines)))
+        (s-join "\n" prefixed-lines)))))
+
+(defun hack--fill-paragraph-star ()
+  "Fill paragraph when point is inside a /* comment."
+  (let* ((line-start-pos (line-beginning-position))
+         (comment-start (nth 8 (syntax-ppss)))
+         (comment-end nil))
+    (save-excursion
+      (search-forward "*/")
+      (setq comment-end (point)))
+    (save-excursion
+      (save-restriction
+        ;; Narrow to the comment, to ensure we don't move beyond the end.
+        (narrow-to-region comment-start comment-end)
+
+        ;; Move over all the non-empty comment lines, considering * to
+        ;; be an empty line.
+        (while (and
+                (not (eobp))
+                (not (looking-at
+                      (rx
+                       bol
+                       (? "/")
+                       (0+ space) (? "*")
+                       (0+ space)
+                       eol))))
+          (forward-line))
+
+        (if (eobp)
+            ;; Don't add the */ to our wrapped comment.
+            (progn
+              (forward-line -1)
+              (end-of-line))
+          ;; Exclude the trailing newline.
+          (backward-char))
+
+        (let ((contents (buffer-substring line-start-pos (point))))
+          (delete-region line-start-pos (point))
+          (insert (hack--wrap-comment-inner contents)))))))
+
+(defun hack-fill-paragraph (&optional _justify)
+  "Fill the paragraph at point."
+  (let* ((ppss (syntax-ppss))
+         (in-comment-p (nth 4 ppss))
+         (comment-start (nth 8 ppss))
+         (comment-end nil)
+         (in-star-comment-p nil))
+    (when in-comment-p
+      (save-excursion
+        (goto-char comment-start)
+        (when (looking-at (rx "/*"))
+          (setq in-star-comment-p t))))
+    (if in-star-comment-p
+        (progn
+          (hack--fill-paragraph-star)
+          t)
+      ;; Returning nil means that `fill-paragraph' will run, which is
+      ;; sufficient for // comments.
+      nil)))
+
 ;; hh_server can choke if you symlink your www root
 (setq find-file-visit-truename t)
 
@@ -288,7 +381,8 @@
   (setq-local font-lock-defaults '(hack-font-lock-keywords))
   (setq-local compile-command (concat hack-client-program-name " --from emacs"))
   (setq-local indent-line-function #'hack-xhp-indent-line)
-  (setq-local comment-start "// "))
+  (setq-local comment-start "// ")
+  (setq-local fill-paragraph-function #'hack-fill-paragraph))
 
 (provide 'hack-mode)
 ;;; hack-mode.el ends here
