@@ -27,4 +27,9 @@
     (should
      (equal
       (buffer-string)
-      "// x"))))
+      "/**
+ * Thing Thing Thing Thing Thing Thing Thing Thing Thing Thing Thing
+ * Thing
+ *
+ * This runs very quickly
+ */" ))))
