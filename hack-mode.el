@@ -303,6 +303,8 @@ wrap it to:
   (let* ((line-start-pos (line-beginning-position))
          (comment-start (nth 8 (syntax-ppss)))
          (comment-end nil))
+    ;; Put a property on the text at point, so we can put point back afterwards.
+    (put-text-property (point) (1+ (point)) 'hack-fill-start-pos t)
     (save-excursion
       (search-forward "*/")
       (setq comment-end (point)))
@@ -334,7 +336,12 @@ wrap it to:
 
         (let ((contents (buffer-substring line-start-pos (point))))
           (delete-region line-start-pos (point))
-          (insert (hack--wrap-comment-inner contents)))))))
+          (insert (hack--wrap-comment-inner contents)))))
+    (while (and (not (eobp))
+                (not (get-text-property (point) 'hack-fill-start-pos)))
+      (forward-char))
+    (when (get-text-property (point) 'hack-fill-start-pos)
+      (remove-text-properties (point) (1+ (point)) '(hack-fill-start-pos nil)))))
 
 (defun hack-fill-paragraph (&optional _justify)
   "Fill the paragraph at point."
