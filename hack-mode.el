@@ -27,7 +27,6 @@
 ;;
 
 ;;; Code:
-(require 'hack-xhp-indent)
 (require 's)
 
 (defgroup hack nil
