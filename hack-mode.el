@@ -36,10 +36,13 @@
 
 (defcustom hack-client-program-name "hh_client"
   "The command to run to communicate with hh_server."
+  :type 'string
   :group 'hack-mode)
 
 (defcustom hack-indent-offset 2
   "Indentation amount (in spaces) for Hack code."
+  :safe #'integerp
+  :type 'integer
   :group 'hack-mode)
 
 (defvar hack-font-lock-keywords
