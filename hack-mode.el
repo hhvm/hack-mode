@@ -662,7 +662,11 @@ Preserves point position in the line where possible."
         (hack-xhp-indent-preserve-point (1+ open-paren-column))))
      ;; Indent according to the amount of nesting.
      (t
-      (hack-xhp-indent-preserve-point (* hack-indent-offset paren-depth))))))
+      (hack-xhp-indent-preserve-point (* hack-indent-offset paren-depth))))
+    ;; Point is now at the beginning of indentation, restore it
+    ;; to its original position (relative to indentation).
+    (when (>= point-offset 0)
+      (move-to-column (+ (current-indentation) point-offset)))))
 
 (defun hack-xhp-indent-line ()
   "Indent current line."
