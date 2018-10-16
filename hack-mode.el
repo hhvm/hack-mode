@@ -195,7 +195,7 @@
      . font-lock-type-face)
     ;; We also highlight _ as a type, but don't highlight ?_.
     (,(regexp-opt '("_") 'symbols)
-     . font-lock-type_face)
+     . font-lock-type-face)
     (,(regexp-opt
        '("null"
          "true"
