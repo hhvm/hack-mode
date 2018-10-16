@@ -189,6 +189,7 @@
         "unset"
         ;; User-defined type.
         (seq
+         (0+ "_")
          (any upper)
          (* (or (syntax word) (syntax symbol)))))
        symbol-end)
