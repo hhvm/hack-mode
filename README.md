@@ -24,3 +24,7 @@ configuration:
 ```emacs-lisp
 (add-to-list 'auto-mode-alist '("\\.php\\'" . hack-mode))
 ```
+
+## License
+
+hack-mode is licensed under the GNU General Public License v3.0
