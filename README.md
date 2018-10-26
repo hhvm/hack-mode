@@ -27,4 +27,4 @@ configuration:
 
 ## License
 
-hack-mode is licensed under the GNU General Public License v3.0
+hack-mode is licensed under the GNU General Public License v3.0.
