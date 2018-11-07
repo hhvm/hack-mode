@@ -38,13 +38,30 @@
 
 (ert-deftest hack-indent-parens ()
   "Ensure we indent simple hack code correctly."
-  (let ((src "function foo(): int {
+  (let ((src "<?hh
+
+function foo(): int {
   if (true) {
     return 1;
   } else {
     return 2;
   }
 }
+"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
+(ert-deftest hack-indent-xhp ()
+  "Ensure we indent XHP expressions correctly."
+  (let ((src "<?hh
+
+$x = <div>
+  <p>hello world</p>
+</div>;
 "))
     (with-temp-buffer
       (hack-mode)
