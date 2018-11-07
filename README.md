@@ -1,4 +1,4 @@
-# hack-mode [![MELPA](http://melpa.org/packages/hack-mode-badge.svg)](http://melpa.org/#/hack-mode) [![Build Status](https://travis-ci.org/hhvm/hack-mode.svg?branch=master)](https://travis-ci.org/hhvm/hack-mode)
+# hack-mode [![MELPA](http://melpa.org/packages/hack-mode-badge.svg)](http://melpa.org/#/hack-mode) [![Build Status](https://travis-ci.com/hhvm/hack-mode.svg?branch=master)](https://travis-ci.com/hhvm/hack-mode)
 A major-mode for [ Hack ](https://hacklang.org/) code.
 
 ## Installation
