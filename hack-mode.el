@@ -461,30 +461,31 @@ Return nil otherwise."
            (> (point) min)
            (re-search-backward hack-xhp-start-regex min t)
            (hack-xhp-in-code-p))
-          (setq
-           xhp-start-pos (point)
-           base-indent
-           ;; decide from this context if indentation should
-           ;; be initially adjusted.
-           (+
-            ;; start with the indentation at this elt
-            (current-indentation)
-            ;; at the matched xhp element, figure out if the
-            ;; indentation should be modified
-            ;; TODO(abrady) too lazy to parse forward properly, these
-            ;; work fine for now.
-            (cond
-             ;; CASE 1: matched elt is closed or self-closing e.g. <br />
-             ;; or a 1-line enclosed stmt: <fbt:param>foo</fbt:param>
-             ((save-excursion
-                (beginning-of-line)
-                (or
-                 (re-search-forward "</" (line-end-position) t)
-                 (re-search-forward "/> *$" start-pos t)
-                 (re-search-forward "--> *$" start-pos t)))
-              0)
-             ;; DEFAULT: increase indent
-             (t hack-indent-offset))))))
+          (progn
+            (setq xhp-start-pos (point))
+            (setq
+             base-indent
+             ;; decide from this context if indentation should
+             ;; be initially adjusted.
+             (+
+              ;; start with the indentation at this elt
+              (current-indentation)
+              ;; at the matched xhp element, figure out if the
+              ;; indentation should be modified
+              ;; TODO(abrady) too lazy to parse forward properly, these
+              ;; work fine for now.
+              (cond
+               ;; CASE 1: matched elt is closed or self-closing e.g. <br />
+               ;; or a 1-line enclosed stmt: <fbt:param>foo</fbt:param>
+               ((save-excursion
+                  (beginning-of-line)
+                  (or
+                   (re-search-forward "</" (line-end-position) t)
+                   (re-search-forward "/> *$" start-pos t)
+                   (re-search-forward "--> *$" start-pos t)))
+                0)
+               ;; DEFAULT: increase indent
+               (t hack-indent-offset)))))))
     ;; STEP 2: indentation adjustment based on what user has typed so far
     (if base-indent
         ;; STEP 2.1: we found indentation to adjust. use the current
