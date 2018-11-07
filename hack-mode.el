@@ -369,7 +369,17 @@ wrap it to:
 
 (defvar hack-xhp-indent-debug-on nil)
 
-(defvar hack-xhp-indent-start-regex "\\(return +\\|^ *\\|==> *\\|\\? *\\|= *\\|( *\\)<[^<\\]"
+(defvar hack-xhp-indent-start-regex
+  (rx (or
+       (seq symbol-start "return" symbol-end)
+       bol
+       "==>"
+       "?"
+       "="
+       "(")
+      (* space)
+      "<"
+      (not (any ?< ?\\)))
   "The regex used to match the valid start of an xhp expression.")
 
 (defun hack-xhp-indent-debug (&rest args)
