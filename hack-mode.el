@@ -484,7 +484,7 @@ Argument MIN Minimum point to search to."
                  (re-search-forward "--> *$" max t)))
               0)
              ;; DEFAULT: increase indent
-             (t 2))))))
+             (t hack-indent-offset))))))
     ;; STEP 2: indentation adjustment based on what user has typed so far
     (if base-indent
         ;; STEP 2.1: we found indentation to adjust. use the current
@@ -513,20 +513,20 @@ Argument MIN Minimum point to search to."
                    ;; </div>
                    ((save-excursion
                       (re-search-forward "^ *</" (line-end-position) t))
-                    (list (+ base-indent -2) 'hack-xhp-indent-in-closing-elt))
+                    (list (+ base-indent (- hack-indent-offset)) 'hack-xhp-indent-in-closing-elt))
                    ;; CASE 3: if this happens to be /> on its own
                    ;; line, reduce indent (coding standard)
                    ((save-excursion
                       (goto-char max)
                       (re-search-forward "^ */> *" (line-end-position) t))
-                    (list (+ base-indent -2) 'hack-xhp-indent-in-closing-stmt))
+                    (list (+ base-indent (- hack-indent-offset)) 'hack-xhp-indent-in-closing-stmt))
                    ;; CASE 4: close of xhp passed to a function, e.g.
                    ;; foo(
                    ;;   <xhp>
                    ;; );
                    ((save-excursion
                       (re-search-forward "^ *);" (line-end-position) t))
-                    (list (+ base-indent -2) 'hack-xhp-indent-in-closing-stmt))
+                    (list (+ base-indent (- hack-indent-offset)) 'hack-xhp-indent-in-closing-stmt))
                    ;; DEFAULT: no modification.
                    (t (list base-indent))))
             ;; already determined we're in xhp, if we have a
@@ -563,11 +563,11 @@ Argument MIN Minimum point to search to."
           (save-excursion (hack-xhp-backward-whitespace) (current-indentation))
           (cond
            ;; CASE 0: user typed a brace. outdent even more
-           ((looking-at ".*}") -4)
+           ((looking-at ".*}") (* -2 hack-indent-offset))
            ;; CASE 1: close of case in a switch stmt, e.g. case FOO:
-           ((looking-at ".*: *$") -4)
+           ((looking-at ".*: *$") (* -2 hack-indent-offset))
            ;; DEFAULT
-           (t -2)))
+           (t (- hack-indent-offset))))
          'hack-xhp-indent-in-first-statement-after-xhp))
        ;; DEFAULT: not first stmt after xhp, let c-indent figure
        ;; this out normally
