@@ -369,7 +369,7 @@ wrap it to:
 
 (defvar hack-xhp-indent-debug-on nil)
 
-(defvar hack-xhp-indent-start-regex
+(defvar hack-xhp-start-regex
   (rx (or
        (seq symbol-start "return" symbol-end)
        bol
@@ -380,7 +380,7 @@ wrap it to:
       (* space)
       "<"
       (not (any ?< ?\\)))
-  "The regex used to match the valid start of an xhp expression.")
+  "The regex used to match the start of an XHP expression.")
 
 (defun hack-xhp-indent-debug (&rest args)
   "Log ARGS if ‘hack-xhp-indent-debug-on’ is set."
@@ -436,8 +436,9 @@ Argument MIN Minimum point to search to."
   "Return the position of the innermost enclosing brace before point."
   (nth 1 (syntax-ppss)))
 
-(defun hack-xhp-indent-xhp-detect ()
-  "Determine if xhp around or above point will affect indentation."
+(defun hack-xhp-indent-offset ()
+  "If point is inside an XHP expression, return the correct indentation amount.
+Return nil otherwise."
   (let*
       ((single-line-php-brace-pos (hack-xhp-enclosing-brace-pos))
        (min-brace
@@ -459,7 +460,7 @@ Argument MIN Minimum point to search to."
     (save-excursion
       (if (and
            (> (point) min)
-           (re-search-backward hack-xhp-indent-start-regex min t)
+           (re-search-backward hack-xhp-start-regex min t)
            (hack-xhp-in-code-p))
           (setq
            xhp-start-pos (point)
@@ -587,8 +588,7 @@ Ensure point is still on the same part of the line afterwards."
 (defun hack-xhp-indent ()
   "Perform XHP indentation if appropriate."
   (interactive)
-  (let
-      ((indent (car (hack-xhp-indent-xhp-detect))))
+  (let ((indent (hack-xhp-indent-offset)))
     (when indent
       (hack-xhp-indent-debug "xhp indent!!!")
       (hack-xhp-indent-preserve-point indent))
