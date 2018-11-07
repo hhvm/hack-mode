@@ -372,15 +372,6 @@ wrap it to:
 (defvar hack-xhp-indent-start-regex "\\(return +\\|^ *\\|==> *\\|\\? *\\|= *\\|( *\\)<[^<\\]"
   "The regex used to match the valid start of an xhp expression.")
 
-(defvar hack-xhp-indent-syntax-attributes
-  '(hack-xhp-indent-in-attribute
-    hack-xhp-indent-in-mutiline-php-in-xhp-block
-    hack-xhp-indent-in-closing-elt
-    hack-xhp-indent-in-closing-stmt
-    hack-xhp-indent-in-first-statement-after-xhp
-    hack-xhp-indent-php-in-xhp
-    hack-xhp-indent-in-xhp))
-
 (defun hack-xhp-indent-debug (&rest args)
   "Log ARGS if ‘hack-xhp-indent-debug-on’ is set."
   (if hack-xhp-indent-debug-on
@@ -580,20 +571,6 @@ Argument MIN Minimum point to search to."
          (t (list nil 'hack-xhp-indent-in-php)))
         )
       )))
-
-(defun hack-xhp-indent-syntax-has-attribute (syntax attribute)
-  "Helper for detecting if point is in XHP.
-Argument SYNTAX Set of syntax attributes."
-  (or
-   (not hack-xhp-indent-debug-on)
-   (memq attribute hack-xhp-indent-syntax-attributes) ;; perf issue
-   (error "Invalid attribute %s" (symbol-name 'hack-xhp-indent-in-xhp)))
-  (memq 'hack-xhp-indent-in-xhp (cdr syntax)))
-
-(defun hack-xhp-indent-in-xhp ()
-  "Helper for detecting if point is in XHP."
-  (interactive)
-  (hack-xhp-indent-syntax-has-attribute (hack-xhp-indent-xhp-detect) 'hack-xhp-indent-in-xhp))
 
 (defun hack-xhp-indent-preserve-point (offset)
   "Indent the current line by OFFSET spaces.
