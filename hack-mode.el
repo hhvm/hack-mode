@@ -439,22 +439,21 @@ Ignore semicolons in strings and comments."
 (defun hack-xhp-indent-offset ()
   "If point is inside an XHP expression, return the correct indentation amount.
 Return nil otherwise."
-  (let*
-      ((single-line-php-brace-pos (hack-xhp-enclosing-brace-pos))
-       (min-brace
-        (save-excursion
-          ;; get out of anything being typed that might confuse the parsing
-          (beginning-of-line)
-          (hack-xhp-enclosing-brace-pos)))
-       (min (save-excursion
-              (or
-               (hack-xhp-indent-previous-semi min-brace)
-               min-brace
-               ;; skip past <?php
-               (+ (point-min) 5))))
-       (max (point))
-       base-indent
-       xhp-start-pos)
+  (let* ((start-pos (point))
+         (single-line-php-brace-pos (hack-xhp-enclosing-brace-pos))
+         (min-brace
+          (save-excursion
+            ;; get out of anything being typed that might confuse the parsing
+            (beginning-of-line)
+            (hack-xhp-enclosing-brace-pos)))
+         (min (save-excursion
+                (or
+                 (hack-xhp-indent-previous-semi min-brace)
+                 min-brace
+                 ;; skip past <?php
+                 (+ (point-min) 5))))
+         base-indent
+         xhp-start-pos)
     ;; STEP 1: find a previous xhp element, and derive the normal
     ;; indentation from it.
     (save-excursion
@@ -481,8 +480,8 @@ Return nil otherwise."
                 (beginning-of-line)
                 (or
                  (re-search-forward "</" (line-end-position) t)
-                 (re-search-forward "/> *$" max t)
-                 (re-search-forward "--> *$" max t)))
+                 (re-search-forward "/> *$" start-pos t)
+                 (re-search-forward "--> *$" start-pos t)))
               0)
              ;; DEFAULT: increase indent
              (t hack-indent-offset))))))
@@ -518,7 +517,7 @@ Return nil otherwise."
                    ;; CASE 3: if this happens to be /> on its own
                    ;; line, reduce indent (coding standard)
                    ((save-excursion
-                      (goto-char max)
+                      (goto-char start-pos)
                       (re-search-forward "^ */> *" (line-end-position) t))
                     (list (+ base-indent (- hack-indent-offset)) 'hack-xhp-indent-in-closing-stmt))
                    ;; CASE 4: close of xhp passed to a function, e.g.
