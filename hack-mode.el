@@ -665,14 +665,25 @@ Preserves point position in the line where possible."
   (setq imenu-generic-expression
         ;; TODO: distinguish functions from methods.
         `(("Function"
-           ,(rx symbol-start "function" symbol-end
-                (+ space)
-                (group (seq symbol-start (+? any) symbol-end)))
+           ,(rx
+             line-start
+             (? (* space) (seq symbol-start (or "private" "protected" "public") symbol-end))
+             (? (* space) (seq symbol-start "static" symbol-end))
+             (? (* space) (seq symbol-start "async" symbol-end))
+             (* space)
+             symbol-start "function" symbol-end
+             (+ space)
+             (group (seq symbol-start (+? any) symbol-end)))
            1)
           ("Class"
-           ,(rx symbol-start "class" symbol-end
-                (+ space)
-                (group (seq symbol-start (+? any) symbol-end)))
+           ,(rx
+             line-start
+             (? (* space) (seq symbol-start "abstract" symbol-end))
+             (? (* space) (seq symbol-start "final" symbol-end))
+             (* space)
+             symbol-start "class" symbol-end
+             (+ space)
+             (group (seq symbol-start (+? any) symbol-end)))
            1)
           ("Interface"
            ,(rx symbol-start "interface" symbol-end
