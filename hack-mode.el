@@ -51,9 +51,13 @@
     ;; by is a shebang. See hphp.ll.
     ;; TODO: handle //strict, //decl.
     (,(rx
-       buffer-start
-       "<?hh")
-     . font-lock-keyword-face)
+       (group
+        (or
+         buffer-start
+         (seq "#!" (* not-newline) "\n")))
+       (group "<?hh"))
+     (1 font-lock-comment-face)
+     (2 font-lock-keyword-face))
     ;; Keywords, based on hphp.ll.
     ;; TODO: what about ... and ?? tokens?
     (,(regexp-opt
