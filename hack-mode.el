@@ -509,6 +509,7 @@ Return nil otherwise."
          ;; <div>
          ;; </div>
          ((save-excursion
+            (beginning-of-line)
             (re-search-forward "^ *</" (line-end-position) t))
           (+ base-indent (- hack-indent-offset)))
          ;; CASE 3: if this happens to be /> on its own
