@@ -661,7 +661,29 @@ Preserves point position in the line where possible."
   (setq-local compile-command (concat hack-client-program-name " --from emacs"))
   (setq-local indent-line-function #'hack-xhp-indent-line)
   (setq-local comment-start "// ")
-  (setq-local fill-paragraph-function #'hack-fill-paragraph))
+  (setq-local fill-paragraph-function #'hack-fill-paragraph)
+  (setq imenu-generic-expression
+        ;; TODO: distinguish functions from methods.
+        `(("Function"
+           ,(rx symbol-start "function" symbol-end
+                (+ space)
+                (group (seq symbol-start (+? any) symbol-end)))
+           1)
+          ("Class"
+           ,(rx symbol-start "class" symbol-end
+                (+ space)
+                (group (seq symbol-start (+? any) symbol-end)))
+           1)
+          ("Interface"
+           ,(rx symbol-start "interface" symbol-end
+                (+ space)
+                (group (seq symbol-start (+? any) symbol-end)))
+           1)
+          ("Trait"
+           ,(rx symbol-start "trait" symbol-end
+                (+ space)
+                (group (seq symbol-start (+? any) symbol-end)))
+           1))))
 
 (provide 'hack-mode)
 ;;; hack-mode.el ends here
