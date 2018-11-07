@@ -489,54 +489,43 @@ Return nil otherwise."
     (if base-indent
         ;; STEP 2.1: we found indentation to adjust. use the current
         ;; context to determine how it should be adjusted
-        (progn
-          (let (res)
-            (setq res
-                  (cond
-                   ;; CASE 0: indenting an attribute
-                   ((looking-at "^ *[a-zA-Z_-]+")
-                    (list base-indent 'hack-xhp-indent-in-attribute))
-                   ;; CASE 1: Terminating a multiline php block is a special
-                   ;; case where we should default to php indentation as if we
-                   ;; were inside the braces
-                   ;; e.g. <div class={foo($a
-                   ;;                      $b)}>
-                   ((save-excursion
-                      (and
-                       (not (re-search-forward "^ *<" (line-end-position) t))
-                       (re-search-forward "}> *$" (line-end-position) t)))
-                    (hack-xhp-indent-debug "terminating php block")
-                    (list nil 'hack-xhp-indent-in-mutiline-php-in-xhp-block))
-                   ;; CASE 2: user is indenting a closing block, so out-dent
-                   ;; e.g.
-                   ;; <div>
-                   ;; </div>
-                   ((save-excursion
-                      (re-search-forward "^ *</" (line-end-position) t))
-                    (list (+ base-indent (- hack-indent-offset)) 'hack-xhp-indent-in-closing-elt))
-                   ;; CASE 3: if this happens to be /> on its own
-                   ;; line, reduce indent (coding standard)
-                   ((save-excursion
-                      (goto-char start-pos)
-                      (re-search-forward "^ */> *" (line-end-position) t))
-                    (list (+ base-indent (- hack-indent-offset)) 'hack-xhp-indent-in-closing-stmt))
-                   ;; CASE 4: close of xhp passed to a function, e.g.
-                   ;; foo(
-                   ;;   <xhp>
-                   ;; );
-                   ((save-excursion
-                      (re-search-forward "^ *);" (line-end-position) t))
-                    (list (+ base-indent (- hack-indent-offset)) 'hack-xhp-indent-in-closing-stmt))
-                   ;; DEFAULT: no modification.
-                   (t (list base-indent))))
-            ;; already determined we're in xhp, if we have a
-            ;; single-line brace it must be php in xhp.
-            (if (and
-                 single-line-php-brace-pos
-                 min-brace
-                 (< min-brace single-line-php-brace-pos))
-                (setq res (append res '(hack-xhp-indent-php-in-xhp))))
-            (append res '(hack-xhp-indent-in-xhp) (list 'xhp-start-pos xhp-start-pos))))
+        (cond
+         ;; CASE 0: indenting an attribute
+         ((looking-at "^ *[a-zA-Z_-]+")
+          base-indent)
+         ;; CASE 1: Terminating a multiline php block is a special
+         ;; case where we should default to php indentation as if we
+         ;; were inside the braces
+         ;; e.g. <div class={foo($a
+         ;;                      $b)}>
+         ((save-excursion
+            (and
+             (not (re-search-forward "^ *<" (line-end-position) t))
+             (re-search-forward "}> *$" (line-end-position) t)))
+          (hack-xhp-indent-debug "terminating php block")
+          nil)
+         ;; CASE 2: user is indenting a closing block, so out-dent
+         ;; e.g.
+         ;; <div>
+         ;; </div>
+         ((save-excursion
+            (re-search-forward "^ *</" (line-end-position) t))
+          (+ base-indent (- hack-indent-offset)))
+         ;; CASE 3: if this happens to be /> on its own
+         ;; line, reduce indent (coding standard)
+         ((save-excursion
+            (goto-char start-pos)
+            (re-search-forward "^ */> *" (line-end-position) t))
+          (+ base-indent (- hack-indent-offset)))
+         ;; CASE 4: close of xhp passed to a function, e.g.
+         ;; foo(
+         ;;   <xhp>
+         ;; );
+         ((save-excursion
+            (re-search-forward "^ *);" (line-end-position) t))
+          (+ base-indent (- hack-indent-offset)))
+         ;; DEFAULT: no modification.
+         (t base-indent))
       ;; STEP 2.2: FIRST STATEMENT AFTER XHP. if we're after
       ;; the close of an xhp statement it still messes up the php
       ;; indentation, so check that here and override
@@ -558,20 +547,17 @@ Return nil otherwise."
            (not (re-search-backward "^ *\\$" (line-beginning-position) t))))
         ;; previous statement IS xhp. check what user has typed so
         ;; far
-        (list
-         (+
-          (save-excursion (hack-xhp-backward-whitespace) (current-indentation))
-          (cond
-           ;; CASE 0: user typed a brace. outdent even more
-           ((looking-at ".*}") (* -2 hack-indent-offset))
-           ;; CASE 1: close of case in a switch stmt, e.g. case FOO:
-           ((looking-at ".*: *$") (* -2 hack-indent-offset))
-           ;; DEFAULT
-           (t (- hack-indent-offset))))
-         'hack-xhp-indent-in-first-statement-after-xhp))
-       ;; DEFAULT: not first stmt after xhp, let c-indent figure
-       ;; this out normally
-       (t (list nil 'hack-xhp-indent-in-php))))))
+        (+
+         (save-excursion (hack-xhp-backward-whitespace) (current-indentation))
+         (cond
+          ;; CASE 0: user typed a brace. outdent even more
+          ((looking-at ".*}") (* -2 hack-indent-offset))
+          ;; CASE 1: close of case in a switch stmt, e.g. case FOO:
+          ((looking-at ".*: *$") (* -2 hack-indent-offset))
+          ;; DEFAULT
+          (t (- hack-indent-offset)))))
+       ;; DEFAULT: not first stmt after xhp, indent normally
+       (t nil)))))
 
 (defun hack-xhp-indent-preserve-point (offset)
   "Indent the current line by OFFSET spaces.
