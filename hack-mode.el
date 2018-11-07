@@ -396,20 +396,20 @@ i.e. not in a comment or string."
     (and (not in-comment)
          (not in-string))))
 
-(defun hack-xhp-indent-previous-semi (min)
-  "Helper for finding the previous semicolon not in a string or comment.
-Argument MIN Minimum point to search to."
-  (if (not min)
-      (setq min (point-min)))
-  (if (> min (point))
-      nil ;; search/re-search error if this is true. stupid
+(defun hack-xhp-indent-previous-semi (limit)
+  "Search backward from point for the last semicolon.
+Return nil if no semicolons were found before we reached position LIMIT.
+Ignore semicolons in strings and comments."
+  (if (not limit)
+      (setq limit (point-min)))
+  (when (> (point) limit)
     (let (res
           (keep-going t))
       (save-excursion
         (while keep-going
           (setq keep-going nil)
 
-          (when (search-backward ";" min t)
+          (when (search-backward ";" limit t)
             (if (hack-xhp-in-code-p)
                 (setq keep-going t)
               ;; semi found, done.
