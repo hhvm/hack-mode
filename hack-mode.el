@@ -60,6 +60,8 @@
      (2 font-lock-keyword-face))
     ;; Keywords, based on hphp.ll.
     ;; TODO: what about ... and ?? tokens?
+    ;; We don't highlight endforeach etc, as they're syntax errors
+    ;; in full_fidelity_syntax_error.ml
     (,(regexp-opt
        '("exit"
          "die"
@@ -70,25 +72,20 @@
          "try"
          "catch"
          "finally"
-         "throw"
          "using"
+         "throw"
          "if"
          "else"
-         "endif"
          "while"
-         "endwhile"
          "do"
          "for"
-         "endfor"
          "foreach"
-         "endforeach"
          "declare"
          "enddeclare"
          "instanceof"
          "as"
          "super"
          "switch"
-         "endswitch"
          "case"
          "default"
          "break"
