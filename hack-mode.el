@@ -158,6 +158,10 @@
          "__COMPILER_FRONTEND__")
        'symbols)
      . font-lock-keyword-face)
+    ;; self:: and parent:: have special meaning in classes in
+    ;; Hack/PHP. Syntactically, they're like static::.
+    (,(regexp-opt '("self" "parent") 'symbols)
+     . font-lock-keyword-face)
     ;; Type definitions.
     (,(rx
        (? "?")
