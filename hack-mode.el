@@ -167,7 +167,14 @@
        (? "?")
        symbol-start
        (or
-        ;; Built-in types, based on naming_special_names.ml.
+        ;; Built-in classes, based on Classes in
+        ;; naming_special_names.ml, excluding self/parent (which we've
+        ;; treated as keywords above).
+        "stdClass"
+        "classname"
+        "typename"
+
+        ;; Built-in types, based on Typehints in naming_special_names.ml.
         "void"
         "resource"
         "num"
