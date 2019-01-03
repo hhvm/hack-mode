@@ -636,6 +636,12 @@ Preserves point position in the line where possible."
         (hack-xhp-indent-preserve-point (1+ open-paren-column))))
      ;; Indent according to the amount of nesting.
      (t
+      ;; Increase indent for lines that are a method call on the line above.
+      ;; foo
+      ;;   ->bar(); <- this line
+      (when (s-starts-with-p "->" (s-trim current-line))
+        (setq paren-depth (1+ paren-depth)))
+
       (hack-xhp-indent-preserve-point (* hack-indent-offset paren-depth))))
     ;; Point is now at the beginning of indentation, restore it
     ;; to its original position (relative to indentation).

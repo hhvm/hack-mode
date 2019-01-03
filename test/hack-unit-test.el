@@ -55,6 +55,20 @@ function foo(): int {
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-method ()
+  "Methods on a separate line should be indented."
+  (let ((src "<?hh
+
+$foo = bar()
+  ->baz();
+"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-xhp ()
   "Ensure we indent XHP expressions correctly."
   (let ((src "<?hh
