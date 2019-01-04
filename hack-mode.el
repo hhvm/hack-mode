@@ -45,6 +45,38 @@
   :type 'integer
   :group 'hack-mode)
 
+(defun hack--propertize-heredoc ()
+  "Put `syntax-table' text properties on heredoc and nowdoc string literals.
+
+See <http://php.net/manual/en/language.types.string.php>."
+  (interactive)
+  ;; Point starts just after the <<<, so the start position is three
+  ;; chars back.
+  (let ((start-pos (- (point) 3))
+        (identifier (buffer-substring (point) (line-end-position))))
+    ;; Nowdoc literals start with <<<'FOO' but end with unquoted FOO.
+    (setq identifier
+          (s-chop-suffix "'" (s-chop-prefix "'" identifier)))
+    ;; The closing identifier must be at the beginning of a line.
+    (search-forward (format "\n%s" identifier) nil t)
+
+    ;; Mark the beginning < as a string beginning, so we don't think
+    ;; any ' or " inside the heredoc are string delimiters.
+    (put-text-property start-pos (1+ start-pos)
+                       'syntax-table
+                       (string-to-syntax "|"))
+    (put-text-property (1- (point)) (point)
+                       'syntax-table
+                       (string-to-syntax "|"))))
+
+(defconst hack--syntax-propertize-function
+  (syntax-propertize-rules
+   ;; Heredocs, of the form <<<EOT
+   ;; foo bar
+   ;; EOT
+   ("<<<"
+    (0 (ignore (hack--propertize-heredoc))))))
+
 (defvar hack-font-lock-keywords
   `(
     ;; <?hh must be on the first line. The only thing it may be preceded
@@ -676,6 +708,9 @@ Preserves point position in the line where possible."
 
 \\{hack-mode-map\\}"
   (setq-local font-lock-defaults '(hack-font-lock-keywords))
+  (set (make-local-variable 'syntax-propertize-function)
+       hack--syntax-propertize-function)
+
   (setq-local compile-command (concat hack-client-program-name " --from emacs"))
   (setq-local indent-line-function #'hack-xhp-indent-line)
   (setq-local comment-start "// ")

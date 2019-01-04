@@ -83,3 +83,62 @@ $x = <div>
 
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
+
+(defmacro with-hack-buffer (src &rest body)
+  "Insert SRC in a temporary `hack-mode' buffer, apply syntax highlighting,
+then run BODY."
+  (declare (indent 1) (debug t))
+  `(with-temp-buffer
+     (insert ,src)
+     (goto-char (point-min))
+     ;; Activate hack-mode, but don't run any hooks. This doesn't
+     ;; matter on Travis, but is defensive when running tests in the
+     ;; current Emacs instance.
+     (delay-mode-hooks (hack-mode))
+     ;; Ensure we've syntax-highlighted the whole buffer.
+     (if (fboundp 'font-lock-ensure)
+         (font-lock-ensure)
+       (with-no-warnings
+         (font-lock-fontify-buffer)))
+     ,@body))
+
+(ert-deftest hack-highlight-heredoc ()
+  (with-hack-buffer "$x = <<<EOT
+hello world
+EOT;
+bar();"
+    (search-forward "hello")
+    (should (eq (face-at-point) 'font-lock-string-face))
+    (search-forward "bar")
+    (should (not (eq (face-at-point) 'font-lock-string-face)))))
+
+(ert-deftest hack-highlight-heredoc-identifier-position ()
+  "The closing identifier must be at the start of a line."
+  (with-hack-buffer "$x = <<<EOT
+hello EOT world
+EOT;
+bar();"
+    (search-forward "world")
+    (should (eq (face-at-point) 'font-lock-string-face))))
+
+(ert-deftest hack-highlight-nowdoc ()
+  (with-hack-buffer "$x = <<<'EOT'
+hello world
+EOT;
+bar();"
+    (search-forward "hello")
+    (should (eq (face-at-point) 'font-lock-string-face))
+    (search-forward "bar")
+    (should (not (eq (face-at-point) 'font-lock-string-face)))))
+
+(ert-deftest hack-highlight-heredoc-containing-quotes ()
+  "If there's a doublequote inside a heredoc, we should still
+stop highlighting at the identifier."
+  (with-hack-buffer "$x = <<<EOT
+hello \"world
+EOT;
+bar();"
+    (search-forward "hello")
+    (should (eq (face-at-point) 'font-lock-string-face))
+    (search-forward "bar")
+    (should (not (eq (face-at-point) 'font-lock-string-face)))))
