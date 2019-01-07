@@ -69,6 +69,19 @@ $foo = bar()
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-nullable-attribute ()
+  (let ((src "<?hh
+
+$foo = bar()
+  ?->baz;
+"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-xhp ()
   "Ensure we indent XHP expressions correctly."
   (let ((src "<?hh

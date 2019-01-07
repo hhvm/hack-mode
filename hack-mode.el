@@ -671,7 +671,8 @@ Preserves point position in the line where possible."
       ;; Increase indent for lines that are a method call on the line above.
       ;; foo
       ;;   ->bar(); <- this line
-      (when (s-starts-with-p "->" (s-trim current-line))
+      (when (or (s-starts-with-p "->" (s-trim current-line))
+                (s-starts-with-p "?->" (s-trim current-line)))
         (setq paren-depth (1+ paren-depth)))
 
       (hack-xhp-indent-preserve-point (* hack-indent-offset paren-depth))))
