@@ -155,3 +155,29 @@ bar();"
     (should (eq (face-at-point) 'font-lock-string-face))
     (search-forward "bar")
     (should (not (eq (face-at-point) 'font-lock-string-face)))))
+
+(ert-deftest hack-highlight-c-comment ()
+  (with-hack-buffer "// foo bar
+baz();"
+    (search-forward "foo")
+    (should (eq (face-at-point) 'font-lock-comment-face))
+    (search-forward "baz")
+    (should (not (eq (face-at-point) 'font-lock-comment-face)))))
+
+(ert-deftest hack-highlight-cpp-comment ()
+  (with-hack-buffer "/* foo bar
+baz();
+*/
+qux();"
+    (search-forward "baz")
+    (should (eq (face-at-point) 'font-lock-comment-face))
+    (search-forward "qux")
+    (should (not (eq (face-at-point) 'font-lock-comment-face)))))
+
+(ert-deftest hack-highlight-shell-comment ()
+  (with-hack-buffer "# foo bar
+baz()"
+    (search-forward "foo")
+    (should (eq (face-at-point) 'font-lock-comment-face))
+    (search-forward "baz")
+    (should (not (eq (face-at-point) 'font-lock-comment-face)))))

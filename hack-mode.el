@@ -304,9 +304,23 @@ See <http://php.net/manual/en/language.types.string.php>."
     (modify-syntax-entry ?\" "\"" table)
     (modify-syntax-entry ?\\ "\\" table)
     (modify-syntax-entry ?' "\"" table)
-    ;; Comments
+
+    ;; Comments of the form
+    ;; # This is a single-line comment.
+    ;; Tag these as comment sequence b.
+    (modify-syntax-entry ?# "< b" table)
+
+    ;; / can start both // and /* style comments. When it's a second
+    ;; character, it's a single line comment, so also tag as comment
+    ;; sequence b.
     (modify-syntax-entry ?/ ". 124b" table)
+
+    ;; * is the second character in /* comments, and the first
+    ;; character in the end */.
     (modify-syntax-entry ?* ". 23" table)
+
+    ;; Newlines end both # and // comments. Ensure we support both
+    ;; unix and dos style newlines.
     (modify-syntax-entry ?\n "> b" table)
     (modify-syntax-entry ?\^m "> b" table)
 
