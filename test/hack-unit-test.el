@@ -69,6 +69,22 @@ $foo = bar()
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-heredoc ()
+  "Don't change the indentation inside a heredoc literal."
+  (let ((src "<?hh
+
+$foo = <<<EOT
+bar
+          baz
+EOT;
+"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-nullable-attribute ()
   (let ((src "<?hh
 

@@ -639,7 +639,9 @@ Ensure point is still on the same part of the line afterwards."
   "Indent the current line of Hack code.
 Preserves point position in the line where possible."
   (interactive)
-  (let* ((point-offset (- (current-column) (current-indentation)))
+  (let* ((syntax-bol (syntax-ppss (line-beginning-position)))
+         (in-multiline-string-p (nth 3 syntax-bol))
+         (point-offset (- (current-column) (current-indentation)))
          (ppss (syntax-ppss (line-beginning-position)))
          (paren-depth (nth 0 ppss))
          (current-paren-pos (nth 1 ppss))
@@ -658,6 +660,9 @@ Preserves point position in the line where possible."
            (string-match-p (rx bol (0+ space) (or ")" "}")) current-line))
       (setq paren-depth (1- paren-depth)))
     (cond
+     ;; Don't indent inside heredoc/nowdoc strings.
+     (in-multiline-string-p
+      nil)
      ;; In multiline comments, ensure the leading * is indented by one
      ;; more space. For example:
      ;; /*
