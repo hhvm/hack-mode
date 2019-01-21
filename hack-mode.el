@@ -82,6 +82,7 @@ See <http://php.net/manual/en/language.types.string.php>."
     ;; <?hh must be on the first line. The only thing it may be preceded
     ;; by is a shebang. See hphp.ll.
     ;; TODO: handle //strict, //decl.
+    ;; In .hack files, <?hh is not used.
     (,(rx
        (group
         (or
