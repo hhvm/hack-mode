@@ -428,6 +428,7 @@ wrap it to:
 
 (defvar hack-xhp-indent-debug-on nil)
 
+;; TODO: see next_xhp_element_token in full_fidelity_lexer.ml
 (defvar hack-xhp-start-regex
   (rx (or
        (seq symbol-start "return" symbol-end)
