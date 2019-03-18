@@ -98,6 +98,19 @@ $foo = bar()
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-pipe ()
+  (let ((src "<?hh
+
+$foo
+  |> baz($$);
+"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-xhp ()
   "Ensure we indent XHP expressions correctly."
   (let ((src "<?hh
