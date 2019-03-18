@@ -291,11 +291,10 @@ See <http://php.net/manual/en/language.types.string.php>."
     (modify-syntax-entry ?< "." table)
     (modify-syntax-entry ?> "." table)
 
-    ;; Treat + as punctuation.
+    ;; Treat + & and | as punctuation.
     (modify-syntax-entry ?+ "." table)
-
-    ;; Treat & as punctuation.
     (modify-syntax-entry ?& "." table)
+    (modify-syntax-entry ?| "." table)
 
     ;; Treat \ as punctuation, so we can navigate between different
     ;; parts of a namespace reference.
