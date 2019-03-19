@@ -49,7 +49,6 @@
   "Put `syntax-table' text properties on heredoc and nowdoc string literals.
 
 See <http://php.net/manual/en/language.types.string.php>."
-  (interactive)
   ;; Point starts just after the <<<, so the start position is three
   ;; chars back.
   (let ((start-pos (- (point) 3))
