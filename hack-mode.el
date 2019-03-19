@@ -15,7 +15,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-;; Author: John Allen <jallen@fb.com>
+;; Author: John Allen <jallen@fb.com>, Wilfred Hughes <me@wilfred.me.uk>
 ;; Version: 1.0.0
 ;; Package-Requires: ((emacs "25.1") (s "1.11.0"))
 ;; URL: https://github.com/hhvm/hack-mode
