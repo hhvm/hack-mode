@@ -324,6 +324,10 @@ See <http://php.net/manual/en/language.types.string.php>."
     (modify-syntax-entry ?\n "> b" table)
     (modify-syntax-entry ?\^m "> b" table)
 
+    ;; < and > are paired delimiters.
+    (modify-syntax-entry ?< "(>" table)
+    (modify-syntax-entry ?> ")<" table)
+
     table))
 
 (defun hack--comment-prefix (s)
