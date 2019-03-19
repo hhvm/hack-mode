@@ -144,6 +144,11 @@ then run BODY."
          (font-lock-fontify-buffer)))
      ,@body))
 
+(ert-deftest hack-highlight-header ()
+  (with-hack-buffer "<?hh // strict"
+    (search-forward "h")
+    (should (eq (face-at-point) 'font-lock-keyword-face))))
+
 (ert-deftest hack-highlight-heredoc ()
   (with-hack-buffer "$x = <<<EOT
 hello world

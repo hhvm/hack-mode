@@ -69,8 +69,28 @@ See <http://php.net/manual/en/language.types.string.php>."
                        'syntax-table
                        (string-to-syntax "|"))))
 
+(eval-when-compile
+  (defconst hack--header-regex
+    ;; <?hh can only occur on the first line. The only thing it may be preceded
+    ;; by is a shebang. It's compulsory, except in .hack files. See hphp.ll.
+    ;; TODO: handle //strict, //decl.
+    (rx
+     (or
+      buffer-start
+      (seq "#!" (* not-newline) "\n"))
+     (group "<?hh"))))
+
+(defun hack--propertize-header ()
+  "Ensure <?hh is not treated as a < delimiter."
+  (let ((start (match-beginning 1))
+        (end (match-end 1)))
+    (put-text-property start end
+		       'syntax-table (string-to-syntax "."))))
+
 (defconst hack--syntax-propertize-function
   (syntax-propertize-rules
+   (hack--header-regex
+    (0 (ignore (hack--propertize-header))))
    ;; Heredocs, of the form <<<EOT
    ;; foo bar
    ;; EOT
@@ -79,18 +99,8 @@ See <http://php.net/manual/en/language.types.string.php>."
 
 (defvar hack-font-lock-keywords
   `(
-    ;; <?hh must be on the first line. The only thing it may be preceded
-    ;; by is a shebang. See hphp.ll.
-    ;; TODO: handle //strict, //decl.
-    ;; In .hack files, <?hh is not used.
-    (,(rx
-       (group
-        (or
-         buffer-start
-         (seq "#!" (* not-newline) "\n")))
-       (group "<?hh"))
-     (1 font-lock-comment-face)
-     (2 font-lock-keyword-face))
+    (,hack--header-regex
+     (1 font-lock-keyword-face))
     ;; Keywords, based on hphp.ll.
     ;; TODO: what about ... and ?? tokens?
     ;; We don't highlight endforeach etc, as they're syntax errors
