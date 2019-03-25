@@ -295,15 +295,14 @@ See <http://php.net/manual/en/language.types.string.php>."
 
 (defvar hack-mode-syntax-table
   (let ((table (make-syntax-table)))
-    ;; - and < are not symbol constituents.
+    ;; Characters that are punctuation, not symbol elements.
     (modify-syntax-entry ?- "." table)
     (modify-syntax-entry ?< "." table)
     (modify-syntax-entry ?> "." table)
-
-    ;; Treat + & and | as punctuation.
     (modify-syntax-entry ?+ "." table)
     (modify-syntax-entry ?& "." table)
     (modify-syntax-entry ?| "." table)
+    (modify-syntax-entry ?= "." table)
 
     ;; Treat \ as punctuation, so we can navigate between different
     ;; parts of a namespace reference.
