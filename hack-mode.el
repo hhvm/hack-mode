@@ -79,22 +79,38 @@ See <http://php.net/manual/en/language.types.string.php>."
       (seq "#!" (* not-newline) "\n"))
      (group "<?hh"))))
 
-(defun hack--propertize-header ()
-  "Ensure <?hh is not treated as a < delimiter."
-  (let ((start (match-beginning 1))
-        (end (match-end 1)))
-    (put-text-property start end
-		       'syntax-table (string-to-syntax "."))))
+(defun hack--propertize-lt ()
+  "Ensure < is not treated a < delimiter in other syntactic contexts."
+  (let ((start (1- (point))))
+    (when (or (looking-at "?hh")
+              ;; If there's a following space, assume it's 1 < 2.
+              (looking-at " "))
+      (put-text-property start (1+ start)
+		         'syntax-table (string-to-syntax ".")))))
+
+(defun hack--propertize-gt ()
+  "Ensure > in -> or => isn't treated as a > delimiter."
+  (let* ((start (1- (point))))
+    (when (> start (point-min))
+      (let ((prev-char (char-before start)))
+        ;; If there's a preceding space, we assume it's 1 < 2 rather than
+        ;; a type vec < int > with excess space.
+        (when (memq prev-char (list ?= ?- ?\ ))
+          (put-text-property start (1+ start)
+		             'syntax-table (string-to-syntax ".")))))))
 
 (defconst hack--syntax-propertize-function
   (syntax-propertize-rules
-   (hack--header-regex
-    (0 (ignore (hack--propertize-header))))
-   ;; Heredocs, of the form <<<EOT
+   ;; Heredocs, e.g.
+   ;; $x = <<<EOT
    ;; foo bar
-   ;; EOT
+   ;; EOT;
    ("<<<"
-    (0 (ignore (hack--propertize-heredoc))))))
+    (0 (ignore (hack--propertize-heredoc))))
+   ("<"
+    (0 (ignore (hack--propertize-lt))))
+   (">"
+    (0 (ignore (hack--propertize-gt))))))
 
 (defvar hack-font-lock-keywords
   `(

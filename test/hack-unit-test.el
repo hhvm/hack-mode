@@ -144,6 +144,60 @@ then run BODY."
          (font-lock-fontify-buffer)))
      ,@body))
 
+(ert-deftest hack-syntax-angle-bracket-for-type ()
+  "Match angle brackets in type parameters."
+  (with-hack-buffer "function foo(vec<int> $_): void {}"
+    (search-forward ">")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         5))))
+
+(ert-deftest hack-syntax-angle-bracket-method ()
+  "Method access is not a matched pair."
+  (with-hack-buffer "$foo->bar();"
+    (search-forward ">")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
+(ert-deftest hack-syntax-angle-bracket-lambda ()
+  "Lambdas are not a matched pair."
+  (with-hack-buffer "() ==> $x;"
+    (search-forward ">")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
+(ert-deftest hack-syntax-angle-bracket-dict ()
+  "Lambdas are not a matched pair."
+  (with-hack-buffer "dict['foo' => 42];"
+    (search-forward ">")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
+(ert-deftest hack-syntax-angle-bracket-less-than ()
+  "Less than is not a matched type delimiter."
+  (with-hack-buffer "$x = 1 > 2;"
+    (search-forward ">")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
+(ert-deftest hack-syntax-angle-bracket-greater-than ()
+  "Greater than is not a matched type delimiter."
+  (with-hack-buffer "$x = 1 < 2;"
+    (search-forward "<")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
 (ert-deftest hack-highlight-header ()
   (with-hack-buffer "<?hh // strict"
     (search-forward "h")
