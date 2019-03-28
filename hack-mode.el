@@ -135,8 +135,7 @@ See <http://php.net/manual/en/language.types.string.php>."
       (while (and
               (not res)
               (re-search-forward pattern limit t))
-        (let* ((pos (point))
-               (ppss (syntax-ppss))
+        (let* ((ppss (syntax-ppss))
                (in-string-p (nth 3 ppss))
                (string-delimiter-pos (nth 8 ppss))
                (string-delimiter
@@ -156,7 +155,7 @@ See <http://php.net/manual/en/language.types.string.php>."
                   (setq interpolation-p nil))))))
 
           (when interpolation-p
-            (setq res pos)
+            (setq res (point))
             ;; Set match data to the group we matched.
             (setq match-data (list (match-beginning 1) (match-end 1)))))))
     ;; Set match data and return point so we highlight this
