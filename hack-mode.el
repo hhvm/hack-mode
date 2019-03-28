@@ -39,6 +39,11 @@
   :type 'string
   :group 'hack-mode)
 
+(defcustom hack-hackfmt-name "hackfmt"
+  "The command to run to format code."
+  :type 'string
+  :group 'hack-mode)
+
 (defcustom hack-indent-offset 2
   "Indentation amount (in spaces) for Hack code."
   :safe #'integerp
@@ -901,6 +906,31 @@ Preserves point position in the line where possible."
                 (+ space)
                 (group (seq symbol-start (+? any) symbol-end)))
            1))))
+
+(defun hack-format-buffer ()
+  "Format the current buffer with hackfmt."
+  (interactive)
+  (let ((src-buf (current-buffer))
+        (src (buffer-string))
+        (start-line (line-number-at-pos (point)))
+        (start-column (current-column))
+        (output-buf (get-buffer-create "*hackfmt*")))
+    (with-current-buffer output-buf
+      (erase-buffer)
+      (insert src)
+      (if (zerop
+           (call-process-region (point-min) (point-max)
+                                hack-hackfmt-name t t nil))
+          (progn
+            (unless (string= (buffer-string) src)
+              ;; We've changed something, so update the source buffer.
+              (copy-to-buffer src-buf (point-min) (point-max)))
+            (kill-buffer))
+        (error "Hackfmt failed, see *hackfmt* buffer for details")))
+    ;; Do our best to restore point position.
+    (goto-char (point-min))
+    (forward-line (1- start-line))
+    (forward-char start-column)))
 
 (provide 'hack-mode)
 ;;; hack-mode.el ends here
