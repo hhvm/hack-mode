@@ -164,6 +164,49 @@ See <http://php.net/manual/en/language.types.string.php>."
       (set-match-data match-data)
       res)))
 
+(defun hack-font-lock-interpolate-complex (limit)
+  "Search for {$foo} string interpolation."
+  (let (res start)
+    (while (and
+            (not res)
+            (search-forward "{$" limit t))
+      (let* ((ppss (syntax-ppss))
+             (in-string-p (nth 3 ppss))
+             (string-delimiter-pos (nth 8 ppss))
+             (string-delimiter
+              (when in-string-p (char-after string-delimiter-pos)))
+             (interpolation-p in-string-p))
+        (cond
+         ;; Interpolation does not apply in single-quoted strings.
+         ((eq string-delimiter ?')
+          (setq interpolation-p nil))
+         ;; We can interpolate in <<<FOO, but not in <<<'FOO'
+         ((eq string-delimiter ?<)
+          (save-excursion
+            (goto-char string-delimiter-pos)
+            (save-match-data
+              (re-search-forward (rx (+ "<")))
+              (when (looking-at (rx "'"))
+                (setq interpolation-p nil))))))
+
+        (when interpolation-p
+          (setq start (match-beginning 0))
+          (let ((restart-pos (match-end 0)))
+            ;; Search forward for the } that matches the opening {.
+            (while (and (not res) (search-forward "}" limit t))
+              (let ((end-pos (point)))
+                (save-excursion
+                  (when (and (ignore-errors (backward-list 1))
+                             (= start (point)))
+                    (setq res end-pos)))))
+            (unless res
+              (goto-char restart-pos))))))
+    ;; Set match data and return point so we highlight this
+    ;; instance.
+    (when res
+      (set-match-data (list start res))
+      res)))
+
 (defvar hack-font-lock-keywords
   `(
     (,hack--header-regex
@@ -361,7 +404,11 @@ See <http://php.net/manual/en/language.types.string.php>."
           (or "FALLTHROUGH" "UNSAFE"))
      . font-lock-function-name-face)
 
+    ;; TODO: It would be nice to highlight interpolation operators in
+    ;; Str\format or metacharacters in regexp literals too.
     (hack-font-lock-interpolate
+     (0 font-lock-variable-name-face t))
+    (hack-font-lock-interpolate-complex
      (0 font-lock-variable-name-face t))))
 
 (defvar hack-mode-syntax-table

@@ -314,6 +314,29 @@ baz()"
     (search-forward "f")
     (should (not (eq (face-at-point) 'font-lock-variable-name-face)))))
 
+(ert-deftest hack-highlight-string-interpolation-complex ()
+  (with-hack-buffer "$x = \"{$foo}\";"
+    (search-forward "f")
+    (should (eq (face-at-point) 'font-lock-variable-name-face))
+    (search-forward "}")
+    (backward-char 1)
+    (should (eq (face-at-point) 'font-lock-variable-name-face)))
+  (with-hack-buffer "$x = \"{$foo['bar']}\";"
+    (search-forward "}")
+    (backward-char 1)
+    (should (eq (face-at-point) 'font-lock-variable-name-face))))
+
+(ert-deftest hack-highlight-string-interpolation-not-complex ()
+  "Spaces prevent complex interpolation."
+  (with-hack-buffer "$x = \"{ $foo}\";"
+    (search-forward "{")
+    (backward-char 1)
+    (should (not (eq (face-at-point) 'font-lock-variable-name-face)))
+
+    (search-forward "f")
+    (backward-char 1)
+    (should (eq (face-at-point) 'font-lock-variable-name-face))))
+
 (ert-deftest hack-highlight-no-interpolation ()
   "Hack doesn't interpolate between single quoted strings."
   (with-hack-buffer "$x = '$foo bar';"
