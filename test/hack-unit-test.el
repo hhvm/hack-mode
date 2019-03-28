@@ -274,8 +274,34 @@ baz()"
   (with-hack-buffer "$x = \"$foo bar\";"
     (search-forward "f")
     (should (eq (face-at-point) 'font-lock-variable-name-face))
-    (search-forward "bar")
+    (search-forward "b")
     (should (eq (face-at-point) 'font-lock-string-face))))
+
+(ert-deftest hack-highlight-string-interpolation-objects ()
+  (with-hack-buffer "$x = \"$foo->bar\";"
+    (search-forward "b")
+    (should (eq (face-at-point) 'font-lock-variable-name-face)))
+  (with-hack-buffer "$x = \"$foo->bar->biz\";"
+    (search-forward "i")
+    (should (eq (face-at-point) 'font-lock-variable-name-face))))
+
+(ert-deftest hack-highlight-string-interpolation-indexing ()
+  (with-hack-buffer "$x = \"$foo[123]\";"
+    (search-forward "2")
+    (should (eq (face-at-point) 'font-lock-variable-name-face)))
+  (with-hack-buffer "$x = \"$foo[a][b]\";"
+    (search-forward "b")
+    (should (eq (face-at-point) 'font-lock-variable-name-face))))
+
+(ert-deftest hack-highlight-string-interpolation-braced ()
+  (with-hack-buffer "$x = \"${foo}bar\";"
+    (search-forward "f")
+    (should (eq (face-at-point) 'font-lock-variable-name-face))
+    (search-forward "}")
+    (backward-char 1)
+    (should (eq (face-at-point) 'font-lock-variable-name-face))
+    (search-forward "b")
+    (should (not (eq (face-at-point) 'font-lock-variable-name-face)))))
 
 (ert-deftest hack-highlight-heredoc-interpolation ()
   (with-hack-buffer "$x = <<<EOT\n$foo bar\nEOT;"

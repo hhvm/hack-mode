@@ -117,7 +117,17 @@ See <http://php.net/manual/en/language.types.string.php>."
   (let ((pattern
          (rx (not (any "\\"))
              (group
-              "$" (+ (or (syntax word) (syntax symbol))) symbol-end)))
+              (or
+               (seq
+                ;; $foo
+                "$" (+ (or (syntax word) (syntax symbol))) symbol-end
+                (0+ (or
+                     ;; $foo->bar
+                     (seq "->" (+ (or (syntax word) (syntax symbol))) symbol-end)
+                     ;; $foo[123]
+                     (seq "[" (+ (or (syntax word) (syntax symbol))) symbol-end "]"))))
+               ;; ${foo}
+               (seq "${" (+ (or (syntax word) (syntax symbol))) symbol-end "}")))))
         res match-data)
     (save-match-data
       ;; Search forward for $foo and terminate on the first
