@@ -112,6 +112,49 @@ See <http://php.net/manual/en/language.types.string.php>."
    (">"
     (0 (ignore (hack--propertize-gt))))))
 
+(defun hack-font-lock-interpolate (limit)
+  "Search for $foo string interpolation."
+  (let ((pattern
+         (rx (not (any "\\"))
+             (group
+              "$" (+ (or (syntax word) (syntax symbol))) symbol-end)))
+        res match-data)
+    (save-match-data
+      ;; Search forward for $foo and terminate on the first
+      ;; instance we find that's inside a sring.
+      (while (and
+              (not res)
+              (re-search-forward pattern limit t))
+        (let* ((pos (point))
+               (ppss (syntax-ppss))
+               (in-string-p (nth 3 ppss))
+               (string-delimiter-pos (nth 8 ppss))
+               (string-delimiter
+                (when in-string-p (char-after string-delimiter-pos)))
+               (interpolation-p in-string-p))
+          (cond
+           ;; Interpolation does not apply in single-quoted strings.
+           ((eq string-delimiter ?')
+            (setq interpolation-p nil))
+           ;; We can interpolate in <<<FOO, but not in <<<'FOO'
+           ((eq string-delimiter ?<)
+            (save-excursion
+              (goto-char string-delimiter-pos)
+              (save-match-data
+                (re-search-forward (rx (+ "<")))
+                (when (looking-at (rx "'"))
+                  (setq interpolation-p nil))))))
+
+          (when interpolation-p
+            (setq res pos)
+            ;; Set match data to the group we matched.
+            (setq match-data (list (match-beginning 1) (match-end 1)))))))
+    ;; Set match data and return point so we highlight this
+    ;; instance.
+    (when res
+      (set-match-data match-data)
+      res)))
+
 (defvar hack-font-lock-keywords
   `(
     (,hack--header-regex
@@ -307,7 +350,10 @@ See <http://php.net/manual/en/language.types.string.php>."
     (,(rx "//"
           (+ space)
           (or "FALLTHROUGH" "UNSAFE"))
-     . font-lock-function-name-face)))
+     . font-lock-function-name-face)
+
+    (hack-font-lock-interpolate
+     (0 font-lock-variable-name-face t))))
 
 (defvar hack-mode-syntax-table
   (let ((table (make-syntax-table)))

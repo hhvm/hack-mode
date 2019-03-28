@@ -269,3 +269,30 @@ baz()"
     (should (eq (face-at-point) 'font-lock-comment-face))
     (search-forward "baz")
     (should (not (eq (face-at-point) 'font-lock-comment-face)))))
+
+(ert-deftest hack-highlight-string-interpolation ()
+  (with-hack-buffer "$x = \"$foo bar\";"
+    (search-forward "f")
+    (should (eq (face-at-point) 'font-lock-variable-name-face))
+    (search-forward "bar")
+    (should (eq (face-at-point) 'font-lock-string-face))))
+
+(ert-deftest hack-highlight-heredoc-interpolation ()
+  (with-hack-buffer "$x = <<<EOT\n$foo bar\nEOT;"
+    (search-forward "f")
+    (should (eq (face-at-point) 'font-lock-variable-name-face))))
+
+(ert-deftest hack-highlight-string-interpolation-escaped ()
+  "Backslashes prevent interpolation."
+  (with-hack-buffer "$x = \"\\$foo bar\";"
+    (search-forward "f")
+    (should (not (eq (face-at-point) 'font-lock-variable-name-face)))))
+
+(ert-deftest hack-highlight-no-interpolation ()
+  "Hack doesn't interpolate between single quoted strings."
+  (with-hack-buffer "$x = '$foo bar';"
+    (search-forward "f")
+    (should (not (eq (face-at-point) 'font-lock-variable-name-face))))
+  (with-hack-buffer "$x = <<<'EOT'\n\n$foo bar\nEOT;"
+    (search-forward "f")
+    (should (not (eq (face-at-point) 'font-lock-variable-name-face)))))
