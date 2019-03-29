@@ -50,6 +50,53 @@
   :type 'integer
   :group 'hack-mode)
 
+(defun hack--propertize-xhp ()
+  "Syntax highlight XHP blocks."
+  (let ((tag-start (match-beginning 1))
+        (tags nil))
+    ;; Find the name of the first tag.
+    (goto-char (1+ tag-start))
+    (re-search-forward
+     (rx (+ (or (syntax word) (syntax symbol)))))
+    (push (match-string 0) tags)
+
+    (when (search-forward ">" nil t)
+      (while
+          ;; Whilst we're inside XHP, and there are still more
+          ;; tags in the buffer.
+          (and tags (search-forward "<" nil t))
+
+        (let ((close-p (looking-at-p "/"))
+              tag-name)
+          (when close-p
+            (forward-char 1))
+          ;; Get the name of the current tag.
+          (re-search-forward
+           (rx (+ (or (syntax word) (syntax symbol)))))
+          (setq tag-name (match-string 0))
+          (search-forward ">")
+          (cond
+           ((and close-p (string= tag-name (car tags)))
+            ;; A balanced closing tag.
+            (pop tags))
+           (close-p
+            ;; An unbalanced close tag, we were expecting something
+            ;; else. Assume this is the end of the XHP section.
+            (setq tags nil))
+           (t
+            ;; An open tag.
+            (push tag-name tags)))))
+      ;; Point is now at the end of the XHP section.
+      (let ((end-pos (point)))
+        (goto-char tag-start)
+        (while (search-forward "'" end-pos t)
+          (put-text-property (1- (point)) (point)
+                             'syntax-table
+                             (string-to-syntax ".")))
+        ;; We need to leave point after where we started, or we get an
+        ;; infinite loop.
+        (goto-char end-pos)))))
+
 (defun hack--propertize-heredoc ()
   "Put `syntax-table' text properties on heredoc and nowdoc string literals.
 
@@ -82,7 +129,20 @@ See <http://php.net/manual/en/language.types.string.php>."
      (or
       buffer-start
       (seq "#!" (* not-newline) "\n"))
-     (group "<?hh"))))
+     (group "<?hh")))
+
+  ;; TODO: Check against next_xhp_element_token in full_fidelity_lexer.ml
+  (defconst hack-xhp-start-regex
+    (rx (or
+         (seq symbol-start "return" symbol-end)
+         bol
+         "==>"
+         "?"
+         "="
+         "(")
+        (* space)
+        (group "<" (not (any ?< ?\\ ??))))
+    "The regex used to match the start of an XHP expression."))
 
 (defun hack--propertize-lt ()
   "Ensure < is not treated a < delimiter in other syntactic contexts."
@@ -112,6 +172,8 @@ See <http://php.net/manual/en/language.types.string.php>."
    ;; EOT;
    ("<<<"
     (0 (ignore (hack--propertize-heredoc))))
+   (hack-xhp-start-regex
+    (0 (ignore (hack--propertize-xhp))))
    ("<"
     (0 (ignore (hack--propertize-lt))))
    (">"
@@ -561,20 +623,6 @@ wrap it to:
       nil)))
 
 (defvar hack-xhp-indent-debug-on nil)
-
-;; TODO: see next_xhp_element_token in full_fidelity_lexer.ml
-(defvar hack-xhp-start-regex
-  (rx (or
-       (seq symbol-start "return" symbol-end)
-       bol
-       "==>"
-       "?"
-       "="
-       "(")
-      (* space)
-      "<"
-      (not (any ?< ?\\)))
-  "The regex used to match the start of an XHP expression.")
 
 (defun hack-xhp-indent-debug (&rest args)
   "Log ARGS if ‘hack-xhp-indent-debug-on’ is set."

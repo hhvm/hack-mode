@@ -345,3 +345,53 @@ baz()"
   (with-hack-buffer "$x = <<<'EOT'\n\n$foo bar\nEOT;"
     (search-forward "f")
     (should (not (eq (face-at-point) 'font-lock-variable-name-face)))))
+
+(ert-deftest hack-xhp-single-quote ()
+  "Single quotes inside XHP do not signify a string."
+  (with-hack-buffer "$p = <p>Hello'world</p>;"
+    (search-forward "'")
+    (backward-char 1)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
+(ert-deftest hack-xhp-incomplete ()
+  "Ensure we handle incomplete XHP blocks gracefully."
+  (with-hack-buffer "$p = <p>Hello"))
+
+(ert-deftest hack-xhp-incomplete-tag ()
+  "Ensure we handle incomplete XHP blocks gracefully."
+  (with-hack-buffer "$p = <p"))
+
+(ert-deftest hack-xhp-unbalanced ()
+  "Ensure we handle unbalanced XHP blocks gracefully."
+  (with-hack-buffer "$p = <foo>Hello</bar>;"))
+
+(ert-deftest hack-xhp-quoted-tags ()
+  "< or > in strings shouldn't confuse our XHP highlighting."
+  (with-hack-buffer "$p = <foo attr=\">\">Hello'world</foo>;"
+    ;; If we've correctly detected that we're inside XHP, we should
+    ;; have treated ' as punctuation.
+    (search-forward "'")
+    (backward-char 1)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1)))
+  (with-hack-buffer "$p = <foo attr=\"<\">Hello'world</foo>;"
+    (search-forward "'")
+    (backward-char 1)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1)))
+  (with-hack-buffer "$p = <foo attr=\"><bar>\">Hello'world</foo>;"
+    (search-forward "'")
+    (backward-char 1)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
+(ert-deftest hack-xhp-in-comments ()
+  "Don't try to parse XHP in comments."
+  (with-hack-buffer "// <foo>\n$x = 'bar';"
+    (search-forward "b")
+    (should (eq (face-at-point) 'font-lock-string-face))))
