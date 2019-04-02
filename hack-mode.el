@@ -39,6 +39,12 @@
   :type 'string
   :group 'hack-mode)
 
+(defcustom hack-format-on-save nil
+  "Format the current buffer on save."
+  :type 'boolean
+  :safe #'booleanp
+  :group 'hack-mode)
+
 (defcustom hack-hackfmt-name "hackfmt"
   "The command to run to format code."
   :type 'string
@@ -908,6 +914,45 @@ Preserves point position in the line where possible."
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.hck$" . hack-mode))
 
+(defun hack-format-buffer ()
+  "Format the current buffer with hackfmt."
+  (interactive)
+  (let ((src-buf (current-buffer))
+        (src (buffer-string))
+        (start-line (line-number-at-pos (point)))
+        (start-column (current-column))
+        (output-buf (get-buffer-create "*hackfmt*")))
+    (with-current-buffer output-buf
+      (erase-buffer)
+      (insert src)
+      (if (zerop
+           (call-process-region (point-min) (point-max)
+                                hack-hackfmt-name t t nil))
+          (progn
+            (unless (string= (buffer-string) src)
+              ;; We've changed something, so update the source buffer.
+              (copy-to-buffer src-buf (point-min) (point-max)))
+            (kill-buffer))
+        (error "Hackfmt failed, see *hackfmt* buffer for details")))
+    ;; Do our best to restore point position.
+    (goto-char (point-min))
+    (forward-line (1- start-line))
+    (forward-char start-column)))
+
+(defun hack--maybe-format ()
+  (when hack-format-on-save
+    (hack-format-buffer)))
+
+(defun hack-enable-format-on-save ()
+  "Enable automatic formatting on the current hack-mode buffer.."
+  (interactive)
+  (setq-local hack-format-on-save t))
+
+(defun hack-disable-format-on-save ()
+  "Disable automatic formatting on the current hack-mode buffer.."
+  (interactive)
+  (setq-local hack-format-on-save nil))
+
 ;;;###autoload
 (define-derived-mode hack-mode prog-mode "Hack"
   "Major mode for editing Hack code.
@@ -953,32 +998,11 @@ Preserves point position in the line where possible."
            ,(rx symbol-start "trait" symbol-end
                 (+ space)
                 (group (seq symbol-start (+? any) symbol-end)))
-           1))))
+           1)))
 
-(defun hack-format-buffer ()
-  "Format the current buffer with hackfmt."
-  (interactive)
-  (let ((src-buf (current-buffer))
-        (src (buffer-string))
-        (start-line (line-number-at-pos (point)))
-        (start-column (current-column))
-        (output-buf (get-buffer-create "*hackfmt*")))
-    (with-current-buffer output-buf
-      (erase-buffer)
-      (insert src)
-      (if (zerop
-           (call-process-region (point-min) (point-max)
-                                hack-hackfmt-name t t nil))
-          (progn
-            (unless (string= (buffer-string) src)
-              ;; We've changed something, so update the source buffer.
-              (copy-to-buffer src-buf (point-min) (point-max)))
-            (kill-buffer))
-        (error "Hackfmt failed, see *hackfmt* buffer for details")))
-    ;; Do our best to restore point position.
-    (goto-char (point-min))
-    (forward-line (1- start-line))
-    (forward-char start-column)))
+  (add-hook 'before-save-hook #'hack--maybe-format nil t))
+
+
 
 (provide 'hack-mode)
 ;;; hack-mode.el ends here
