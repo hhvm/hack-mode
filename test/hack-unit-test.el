@@ -222,6 +222,12 @@ bar();"
     (search-forward "world")
     (should (eq (face-at-point) 'font-lock-string-face))))
 
+(ert-deftest hack-highlight-heredoc-requires-newline ()
+  "Heredocs require a newline immediately after the identifier."
+  (with-hack-buffer "function filter<<<__Enforceable>> reify T>(vec<mixed> $list): vec<T> {}"
+    (search-forward "<")
+    (should (not (eq (face-at-point) 'font-lock-string-face)))))
+
 (ert-deftest hack-highlight-nowdoc ()
   (with-hack-buffer "$x = <<<'EOT'
 hello world

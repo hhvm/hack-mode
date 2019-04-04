@@ -109,9 +109,12 @@
 See <http://php.net/manual/en/language.types.string.php>."
   ;; Point starts just after the <<<, so the start position is three
   ;; chars back.
-  (let ((start-pos (- (point) 3))
-        (identifier (buffer-substring (point) (line-end-position))))
-    ;; Nowdoc literals start with <<<'FOO' but end with unquoted FOO.
+  (let ((start-pos (match-beginning 0))
+        (identifier (match-string 1)))
+    ;; Nowdoc literals have the form
+    ;; $x <<<'FOO'
+    ;; bar
+    ;; FOO; // unquoted at end.
     (setq identifier
           (s-chop-suffix "'" (s-chop-prefix "'" identifier)))
     ;; The closing identifier must be at the beginning of a line.
@@ -127,6 +130,17 @@ See <http://php.net/manual/en/language.types.string.php>."
                        (string-to-syntax "|"))))
 
 (eval-when-compile
+  ;; https://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.heredoc
+  (defconst hack--heredoc-regex
+    (rx
+     "<<<"
+     (group
+      (or
+       (+ (or (syntax word) (syntax symbol)))
+       ;; https://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.nowdoc
+       (seq "'" (+ (or (syntax word) (syntax symbol))) "'")))
+     "\n"))
+
   (defconst hack--header-regex
     ;; <?hh can only occur on the first line. The only thing it may be preceded
     ;; by is a shebang. It's compulsory, except in .hack files. See hphp.ll.
@@ -176,7 +190,7 @@ See <http://php.net/manual/en/language.types.string.php>."
    ;; $x = <<<EOT
    ;; foo bar
    ;; EOT;
-   ("<<<"
+   (hack--heredoc-regex
     (0 (ignore (hack--propertize-heredoc))))
    (hack-xhp-start-regex
     (0 (ignore (hack--propertize-xhp))))
