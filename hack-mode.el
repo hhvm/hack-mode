@@ -133,6 +133,8 @@ See <http://php.net/manual/en/language.types.string.php>."
     "The regex used to match the start of an XHP expression."))
 
 (defun hack-font-lock-xhp (limit)
+  "Search up to LIMIT for an XHP expression.
+If we find one, move point to its end, and set match data."
   (when (re-search-forward hack-xhp-start-regex limit t)
     (let ((start-pos (match-beginning 1)))
       (hack--forward-parse-xhp start-pos limit)
@@ -309,7 +311,7 @@ See <http://php.net/manual/en/language.types.string.php>."
   `(
     (,hack--header-regex
      (1 font-lock-keyword-face))
-    ;; Handle XHP first, so we don't confused <p>vec</p> with the vec
+    ;; Handle XHP first, so we don't confuse <p>vec</p> with the vec
     ;; keyword.
     (hack-font-lock-xhp
      (0 'default))
