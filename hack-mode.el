@@ -58,50 +58,18 @@
 
 (defun hack--propertize-xhp ()
   "Syntax highlight XHP blocks."
-  (let ((tag-start (match-beginning 1))
-        (tags nil))
-    ;; Find the name of the first tag.
-    (goto-char (1+ tag-start))
-    (re-search-forward
-     (rx (+ (or (syntax word) (syntax symbol)))))
-    (push (match-string 0) tags)
-
-    (when (search-forward ">" nil t)
-      (while
-          ;; Whilst we're inside XHP, and there are still more
-          ;; tags in the buffer.
-          (and tags (search-forward "<" nil t))
-
-        (let ((close-p (looking-at-p "/"))
-              tag-name)
-          (when close-p
-            (forward-char 1))
-          ;; Get the name of the current tag.
-          (re-search-forward
-           (rx (+ (or (syntax word) (syntax symbol)))))
-          (setq tag-name (match-string 0))
-          (search-forward ">")
-          (cond
-           ((and close-p (string= tag-name (car tags)))
-            ;; A balanced closing tag.
-            (pop tags))
-           (close-p
-            ;; An unbalanced close tag, we were expecting something
-            ;; else. Assume this is the end of the XHP section.
-            (setq tags nil))
-           (t
-            ;; An open tag.
-            (push tag-name tags)))))
-      ;; Point is now at the end of the XHP section.
-      (let ((end-pos (point)))
-        (goto-char tag-start)
-        (while (search-forward "'" end-pos t)
-          (put-text-property (1- (point)) (point)
-                             'syntax-table
-                             (string-to-syntax ".")))
-        ;; We need to leave point after where we started, or we get an
-        ;; infinite loop.
-        (goto-char end-pos)))))
+  (let ((start-pos (match-beginning 1)))
+    (hack--forward-parse-xhp start-pos nil)
+    ;; Point is now at the end of the XHP section.
+    (let ((end-pos (point)))
+      (goto-char start-pos)
+      (while (search-forward "'" end-pos t)
+        (put-text-property (1- (point)) (point)
+                           'syntax-table
+                           (string-to-syntax ".")))
+      ;; We need to leave point after where we started, or we get an
+      ;; infinite loop.
+      (goto-char end-pos))))
 
 (defun hack--propertize-heredoc ()
   "Put `syntax-table' text properties on heredoc and nowdoc string literals.
@@ -163,6 +131,13 @@ See <http://php.net/manual/en/language.types.string.php>."
         (* space)
         (group "<" (not (any ?< ?\\ ??))))
     "The regex used to match the start of an XHP expression."))
+
+(defun hack-font-lock-xhp (limit)
+  (when (re-search-forward hack-xhp-start-regex limit t)
+    (let ((start-pos (match-beginning 1)))
+      (hack--forward-parse-xhp start-pos limit)
+      (set-match-data (list start-pos (point))))
+    (point)))
 
 (defun hack--propertize-lt ()
   "Ensure < is not treated a < delimiter in other syntactic contexts."
@@ -251,6 +226,42 @@ See <http://php.net/manual/en/language.types.string.php>."
       (set-match-data match-data)
       res)))
 
+(defun hack--forward-parse-xhp (start-pos limit)
+  "Move point past the XHP expression beginning at START-POS."
+  (let ((tags nil))
+    ;; Find the name of the first tag.
+    (goto-char (1+ start-pos))
+    (re-search-forward
+     (rx (+ (or (syntax word) (syntax symbol)))))
+    (push (match-string 0) tags)
+
+    (when (search-forward ">" limit t)
+      (while
+          ;; Whilst we're inside XHP, and there are still more
+          ;; tags in the buffer.
+          (and tags (search-forward "<" limit t))
+
+        (let ((close-p (looking-at-p "/"))
+              tag-name)
+          (when close-p
+            (forward-char 1))
+          ;; Get the name of the current tag.
+          (re-search-forward
+           (rx (+ (or (syntax word) (syntax symbol)))))
+          (setq tag-name (match-string 0))
+          (search-forward ">" limit)
+          (cond
+           ((and close-p (string= tag-name (car tags)))
+            ;; A balanced closing tag.
+            (pop tags))
+           (close-p
+            ;; An unbalanced close tag, we were expecting something
+            ;; else. Assume this is the end of the XHP section.
+            (setq tags nil))
+           (t
+            ;; An open tag.
+            (push tag-name tags))))))))
+
 (defun hack-font-lock-interpolate-complex (limit)
   "Search for {$foo} string interpolation."
   (let (res start)
@@ -298,6 +309,11 @@ See <http://php.net/manual/en/language.types.string.php>."
   `(
     (,hack--header-regex
      (1 font-lock-keyword-face))
+    ;; Handle XHP first, so we don't confused <p>vec</p> with the vec
+    ;; keyword.
+    (hack-font-lock-xhp
+     (0 'default))
+    
     ;; Keywords, based on hphp.ll.
     ;; TODO: what about ... and ?? tokens?
     ;; We don't highlight endforeach etc, as they're syntax errors

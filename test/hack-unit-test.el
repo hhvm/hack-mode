@@ -396,6 +396,19 @@ baz()"
      (eq (syntax-class (syntax-after (point)))
          1))))
 
+(ert-deftest hack-xhp-string-contents ()
+  "Text between XHP tags should not be highlighted."
+  (with-hack-buffer "$p = <p>Hello</p>;"
+    (search-forward "H")
+    (should
+     (should
+      (not (eq (face-at-point) 'font-lock-type-face)))))
+  (with-hack-buffer "$p = <p>vec</p>;"
+    (search-forward "v")
+    (should
+     (should
+      (not (eq (face-at-point) 'font-lock-keyword-face))))))
+
 (ert-deftest hack-xhp-in-comments ()
   "Don't try to parse XHP in comments."
   (with-hack-buffer "// <foo>\n$x = 'bar';"
