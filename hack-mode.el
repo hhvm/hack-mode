@@ -201,6 +201,31 @@ If we find one, move point to its end, and set match data."
       (set-match-data match-data)
       (goto-char found-pos))))
 
+(defun hack-font-lock-unsafe-expr (limit)
+  "Search for UNSAFE_EXPR comments."
+  (let ((case-fold-search nil)
+	(found-pos nil)
+	(match-data nil))
+    ;; UNSAFE_EXPR must start with /*, and can have any text afterwards. See
+    ;; full_fidelity_lexer.ml.
+    (save-excursion
+      (while (and (not found-pos)
+		  (search-forward "UNSAFE_EXPR" limit t))
+	(let* ((ppss (syntax-ppss))
+	       (in-comment (nth 4 ppss))
+	       (comment-start (nth 8 ppss)))
+	  (when in-comment
+	    (save-excursion
+	      (goto-char comment-start)
+	      (when (re-search-forward
+		     (rx point "/*" (0+ whitespace) (group "UNSAFE_EXPR"))
+		     limit t)
+		(setq found-pos (point))
+		(setq match-data (match-data))))))))
+    (when found-pos
+      (set-match-data match-data)
+      (goto-char found-pos))))
+
 (defun hack-font-lock-interpolate (limit)
   "Search for $foo string interpolation."
   (let ((pattern
@@ -535,6 +560,8 @@ If we find one, move point to its end, and set match data."
      . font-lock-function-name-face)
 
     (hack-font-lock-unsafe
+     (1 'error t))
+    (hack-font-lock-unsafe-expr
      (1 'error t))
 
     ;; TODO: It would be nice to highlight interpolation operators in
