@@ -380,6 +380,42 @@ baz()"
     (search-forward "U")
     (should (not (eq (face-at-point) 'error)))))
 
+(ert-deftest hack-highlight-hh-fixme ()
+  "Highlight HH_FIXME comments."
+  (with-hack-buffer "/* HH_FIXME[1234] hello world */"
+    (search-forward "H")
+    (should (eq (face-at-point) 'error)))
+  ;; The lexer does actually allow spaces.
+  (with-hack-buffer "/* HH_FIXME [1234] hello world */"
+    ;; Ensure that the error code is included.
+    (search-forward "4")
+    (should (eq (face-at-point) 'error)))
+  ;; Ensure we don't highlight it in other contexts.
+  (with-hack-buffer "// HH_FIXME[1234] hello world"
+    (search-forward "H")
+    (should (not (eq (face-at-point) 'error))))
+  (with-hack-buffer "$x = \" HH_FIXME[1234] hello world\";"
+    (search-forward "H")
+    (should (not (eq (face-at-point) 'error)))))
+
+(ert-deftest hack-highlight-ignore-error ()
+  "Highlight HH_IGNORE_ERROR comments."
+  (with-hack-buffer "/* HH_IGNORE_ERROR[1234] hello world */"
+    (search-forward "H")
+    (should (eq (face-at-point) 'error)))
+  ;; The lexer does actually allow spaces.
+  (with-hack-buffer "/* HH_IGNORE_ERROR [1234] hello world */"
+    ;; Ensure that the error code is included.
+    (search-forward "4")
+    (should (eq (face-at-point) 'error)))
+  ;; Ensure we don't highlight it in other contexts.
+  (with-hack-buffer "// HH_IGNORE_ERROR[1234] hello world"
+    (search-forward "H")
+    (should (not (eq (face-at-point) 'error))))
+  (with-hack-buffer "$x = \" HH_IGNORE_ERROR[1234] hello world\";"
+    (search-forward "H")
+    (should (not (eq (face-at-point) 'error)))))
+
 (ert-deftest hack-xhp-single-quote ()
   "Single quotes inside XHP do not signify a string."
   (with-hack-buffer "$p = <p>Hello'world</p>;"

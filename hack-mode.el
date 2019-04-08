@@ -226,6 +226,60 @@ If we find one, move point to its end, and set match data."
       (set-match-data match-data)
       (goto-char found-pos))))
 
+(defun hack-font-lock-fixme (limit)
+  "Search for HH_FIXME comments."
+  (let ((case-fold-search nil)
+	(found-pos nil)
+	(match-data nil))
+    ;; HH_FIXME must start with /*, see full_fidelity_lexer.ml. The
+    ;; format is matched by scour_comments in full_fidelity_ast.ml,
+    ;; using, the ignore_error regex defined in that file.
+    (save-excursion
+      (while (and (not found-pos)
+		  (search-forward "HH_FIXME" limit t))
+	(let* ((ppss (syntax-ppss))
+	       (in-comment (nth 4 ppss))
+	       (comment-start (nth 8 ppss)))
+	  (when in-comment
+	    (save-excursion
+	      (goto-char comment-start)
+	      (when (re-search-forward
+		     (rx point "/*" (0+ whitespace)
+			 (group "HH_FIXME" (0+ whitespace) "[" (+ digit) "]"))
+		     limit t)
+		(setq found-pos (point))
+		(setq match-data (match-data))))))))
+    (when found-pos
+      (set-match-data match-data)
+      (goto-char found-pos))))
+
+(defun hack-font-lock-ignore-error (limit)
+  "Search for HH_IGNORE_ERROR comments."
+  (let ((case-fold-search nil)
+	(found-pos nil)
+	(match-data nil))
+    ;; HH_IGNORE_ERROR must start with /*, see full_fidelity_lexer.ml. The
+    ;; format is matched by scour_comments in full_fidelity_ast.ml,
+    ;; using, the ignore_error regex defined in that file.
+    (save-excursion
+      (while (and (not found-pos)
+		  (search-forward "HH_IGNORE_ERROR" limit t))
+	(let* ((ppss (syntax-ppss))
+	       (in-comment (nth 4 ppss))
+	       (comment-start (nth 8 ppss)))
+	  (when in-comment
+	    (save-excursion
+	      (goto-char comment-start)
+	      (when (re-search-forward
+		     (rx point "/*" (0+ whitespace)
+			 (group "HH_IGNORE_ERROR" (0+ whitespace) "[" (+ digit) "]"))
+		     limit t)
+		(setq found-pos (point))
+		(setq match-data (match-data))))))))
+    (when found-pos
+      (set-match-data match-data)
+      (goto-char found-pos))))
+
 (defun hack-font-lock-interpolate (limit)
   "Search for $foo string interpolation."
   (let ((pattern
@@ -562,6 +616,10 @@ If we find one, move point to its end, and set match data."
     (hack-font-lock-unsafe
      (1 'error t))
     (hack-font-lock-unsafe-expr
+     (1 'error t))
+    (hack-font-lock-fixme
+     (1 'error t))
+    (hack-font-lock-ignore-error
      (1 'error t))
 
     ;; TODO: It would be nice to highlight interpolation operators in
