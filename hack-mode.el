@@ -176,6 +176,31 @@ If we find one, move point to its end, and set match data."
    (">"
     (0 (ignore (hack--propertize-gt))))))
 
+(defun hack-font-lock-unsafe (limit)
+  "Search for UNSAFE comments."
+  (let ((case-fold-search nil)
+	(found-pos nil)
+	(match-data nil))
+    ;; UNSAFE must start with //, and can have any text afterwards. See
+    ;; full_fidelity_lexer.ml.
+    (save-excursion
+      (while (and (not found-pos)
+		  (search-forward "UNSAFE" limit t))
+	(let* ((ppss (syntax-ppss))
+	       (in-comment (nth 4 ppss))
+	       (comment-start (nth 8 ppss)))
+	  (when in-comment
+	    (save-excursion
+	      (goto-char comment-start)
+	      (when (re-search-forward
+		     (rx point "//" (0+ whitespace) (group "UNSAFE"))
+		     limit t)
+		(setq found-pos (point))
+		(setq match-data (match-data))))))))
+    (when found-pos
+      (set-match-data match-data)
+      (goto-char found-pos))))
+
 (defun hack-font-lock-interpolate (limit)
   "Search for $foo string interpolation."
   (let ((pattern
@@ -508,6 +533,9 @@ If we find one, move point to its end, and set match data."
           (+ space)
           (or "FALLTHROUGH" "UNSAFE"))
      . font-lock-function-name-face)
+
+    (hack-font-lock-unsafe
+     (1 'error t))
 
     ;; TODO: It would be nice to highlight interpolation operators in
     ;; Str\format or metacharacters in regexp literals too.

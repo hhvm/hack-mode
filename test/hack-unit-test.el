@@ -352,6 +352,19 @@ baz()"
     (search-forward "f")
     (should (not (eq (face-at-point) 'font-lock-variable-name-face)))))
 
+(ert-deftest hack-highlight-unsafe-block ()
+  "Highlight unsafe blocks."
+  (with-hack-buffer "// UNSAFE"
+    (search-forward "U")
+    (should (eq (face-at-point) 'error)))
+  ;; Ensure we don't highlight UNSAFE in other contexts.
+  (with-hack-buffer "/* UNSAFE */"
+    (search-forward "U")
+    (should (not (eq (face-at-point) 'error))))
+  (with-hack-buffer "$x = \" UNSAFE\";"
+    (search-forward "U")
+    (should (not (eq (face-at-point) 'error)))))
+
 (ert-deftest hack-xhp-single-quote ()
   "Single quotes inside XHP do not signify a string."
   (with-hack-buffer "$p = <p>Hello'world</p>;"
