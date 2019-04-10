@@ -479,6 +479,11 @@ baz()"
     (search-forward "H")
     (should
      (should
+      (not (eq (face-at-point) 'font-lock-type-face)))))
+  (with-hack-buffer "$p = <Stuff/>;"
+    (search-forward "S")
+    (should
+     (should
       (not (eq (face-at-point) 'font-lock-type-face))))))
 
 (ert-deftest hack-xhp-in-comments ()

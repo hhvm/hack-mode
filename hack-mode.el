@@ -335,17 +335,15 @@ If we find one, move point to its end, and set match data."
 (defun hack--forward-parse-xhp (start-pos limit)
   "Move point past the XHP expression beginning at START-POS."
   (let ((tags nil))
-    ;; Find the name of the first tag.
-    (goto-char (1+ start-pos))
-    (re-search-forward
-     (rx (+ (or (syntax word) (syntax symbol)))))
-    (push (match-string 0) tags)
+    (goto-char start-pos)
 
-    (when (search-forward ">" limit t)
-      (while
-          ;; Whilst we're inside XHP, and there are still more
-          ;; tags in the buffer.
-          (and tags (search-forward "<" limit t))
+    (catch 'done
+      ;; Whilst we're inside XHP, and there are still more
+      ;; tags in the buffer.
+      (while t
+        (unless (search-forward "<" limit t)
+          ;; Can't find any more open tags.
+          (throw 'done t))
 
         (let ((close-p (looking-at-p "/"))
               tag-name
@@ -356,7 +354,12 @@ If we find one, move point to its end, and set match data."
           (re-search-forward
            (rx (+ (or (syntax word) (syntax symbol)))))
           (setq tag-name (match-string 0))
-          (search-forward ">" limit)
+
+          (unless (search-forward ">" limit t)
+            ;; Can't find the mathcing close angle bracket, so the XHP
+            ;; expression is incomplete.
+            (throw 'done t))
+
           (save-excursion
             (backward-char 2)
             (when (looking-at "/>")
@@ -371,10 +374,14 @@ If we find one, move point to its end, and set match data."
            (close-p
             ;; An unbalanced close tag, we were expecting something
             ;; else. Assume this is the end of the XHP section.
-            (setq tags nil))
+            (throw 'done t))
            (t
             ;; An open tag.
-            (push tag-name tags))))))))
+            (push tag-name tags)))
+
+          (unless tags
+            ;; Reach the close of the initial open XHP tag.
+            (throw 'done t)))))))
 
 (defun hack-font-lock-interpolate-complex (limit)
   "Search for {$foo} string interpolation."
