@@ -477,6 +477,15 @@ baz()"
      (eq (syntax-class (syntax-after (point)))
          1))))
 
+(ert-deftest hack-xhp-single-quote-interpolate ()
+  "Single quotes inside XHP inside interpolation."
+  (with-hack-buffer "$p = <div class={foo('bar')}>stuff</p>;"
+    (search-forward "'")
+    (backward-char 1)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         7))))
+
 (ert-deftest hack-xhp-incomplete ()
   "Ensure we handle incomplete XHP blocks gracefully."
   (with-hack-buffer "$p = <p>Hello"))
@@ -525,6 +534,33 @@ baz()"
      (should
       (not (eq (face-at-point) 'font-lock-keyword-face))))))
 
+(ert-deftest hack-xhp-interpolation ()
+  "Interpolation in XHP blocks occurs between curly braces."
+  (with-hack-buffer "$p = <p>{$x}</p>;"
+    (search-forward "$")
+    (should
+     (eq (face-at-point) 'font-lock-variable-name-face))))
+
+(ert-deftest hack-xhp-not-interpolation ()
+  "Ensure we don't highlight outside interpolated regions."
+  ;; Not interpolation.
+  (with-hack-buffer "$p = <p>$x</p>;"
+    (search-forward "$x")
+    (backward-char)
+    (should
+     (not (eq (face-at-point) 'font-lock-variable-name-face))))
+  (with-hack-buffer "$p = <p>$$</p>;"
+    (search-forward "$$")
+    (backward-char)
+    (should
+     (not (eq (face-at-point) 'font-lock-variable-name-face))))
+  ;; Curly parens outside of the XHP expression.
+  (with-hack-buffer "if (true) {\n  $p = <p>$x</p>;\n}"
+    (search-forward "$x")
+    (backward-char)
+    (should
+     (not (eq (face-at-point) 'font-lock-variable-name-face)))))
+
 (ert-deftest hack-xhp-self-closing ()
   "Ensure we don't think a self-closing tag ends an XHP block"
   (with-hack-buffer "$p = <div>\n    <p>\n  <Stuff/>\n  </p>\n  Hello\n</div>;\n"
@@ -540,6 +576,6 @@ baz()"
 
 (ert-deftest hack-xhp-in-comments ()
   "Don't try to parse XHP in comments."
-  (with-hack-buffer "// <foo>\n$x = 'bar';"
-    (search-forward "b")
-    (should (eq (face-at-point) 'font-lock-string-face))))
+  (with-hack-buffer "// <foo>"
+    (search-forward "f")
+    (should (eq (face-at-point) 'font-lock-comment-face))))

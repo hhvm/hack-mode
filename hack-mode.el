@@ -56,6 +56,11 @@
   :type 'integer
   :group 'hack-mode)
 
+(defface hack-xhp-tag
+  '((t . (:inherit font-lock-function-name-face)))
+  "Face used to highlight XHP tags in `hack-mode' buffers."
+  :group 'hack-mode)
+
 (defun hack--propertize-xhp ()
   "Syntax highlight XHP blocks."
   (let ((start-pos (match-beginning 1)))
@@ -63,10 +68,16 @@
     ;; Point is now at the end of the XHP section.
     (let ((end-pos (point)))
       (goto-char start-pos)
+      ;; Ensure that ' is not treated as a string delimiter, unless
+      ;; we're in an XHP interpolated region.
       (while (search-forward "'" end-pos t)
-        (put-text-property (1- (point)) (point)
-                           'syntax-table
-                           (string-to-syntax ".")))
+        (let* ((ppss (syntax-ppss))
+               (paren-pos (nth 1 ppss)))
+          (when (or (null paren-pos)
+                    (> start-pos paren-pos))
+            (put-text-property (1- (point)) (point)
+                               'syntax-table
+                               (string-to-syntax ".")))))
       ;; We need to leave point after where we started, or we get an
       ;; infinite loop.
       (goto-char end-pos))))
@@ -135,11 +146,19 @@ See <http://php.net/manual/en/language.types.string.php>."
 (defun hack-font-lock-xhp (limit)
   "Search up to LIMIT for an XHP expression.
 If we find one, move point to its end, and set match data."
-  (when (re-search-forward hack-xhp-start-regex limit t)
-    (let ((start-pos (match-beginning 1)))
-      (hack--forward-parse-xhp start-pos limit)
-      (set-match-data (list start-pos (point))))
-    (point)))
+  (let ((start-pos nil)
+        (end-pos nil))
+    (save-excursion
+      (while (and (not end-pos)
+                  (re-search-forward hack-xhp-start-regex limit t)
+                  ;; Ignore XHP in comments.
+                  (not (nth 4 (syntax-ppss))))
+        (setq start-pos (match-beginning 1))
+        (hack--forward-parse-xhp start-pos limit t)
+        (setq end-pos (point))))
+    (when end-pos
+      (set-match-data (list start-pos end-pos))
+      (goto-char end-pos))))
 
 (defun hack--propertize-lt ()
   "Ensure < is not treated a < delimiter in other syntactic contexts."
@@ -338,8 +357,9 @@ If we find one, move point to its end, and set match data."
       (set-match-data match-data)
       res)))
 
-(defun hack--forward-parse-xhp (start-pos limit)
-  "Move point past the XHP expression beginning at START-POS."
+(defun hack--forward-parse-xhp (start-pos limit &optional propertize-tags)
+  "Move point past the XHP expression beginning at START-POS.
+If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
   (let ((tags nil))
     (goto-char start-pos)
 
@@ -361,8 +381,14 @@ If we find one, move point to its end, and set match data."
            (rx (+ (or (syntax word) (syntax symbol)))))
           (setq tag-name (match-string 0))
 
+          (when propertize-tags
+            (let* ((inhibit-modification-hooks t)
+                   (before-change-functions nil))
+              (add-face-text-property (match-beginning 0) (match-end 0)
+                                      'hack-xhp-tag)))
+
           (unless (search-forward ">" limit t)
-            ;; Can't find the mathcing close angle bracket, so the XHP
+            ;; Can't find the matching close angle bracket, so the XHP
             ;; expression is incomplete.
             (throw 'done t))
 
@@ -387,7 +413,10 @@ If we find one, move point to its end, and set match data."
 
           (unless tags
             ;; Reach the close of the initial open XHP tag.
-            (throw 'done t)))))))
+            (throw 'done t)))))
+
+    (put-text-property start-pos (point)
+                       'hack-xhp-expression start-pos)))
 
 (defun hack-font-lock-interpolate-complex (limit)
   "Search for {$foo} string interpolation."
@@ -432,6 +461,232 @@ If we find one, move point to its end, and set match data."
       (set-match-data (list start res))
       res)))
 
+(defconst hack--keyword-regex
+  ;; Keywords, based on hphp.ll.
+  ;; TODO: what about ... and ?? tokens?
+  ;; We don't highlight endforeach etc, as they're syntax errors
+  ;; in full_fidelity_syntax_error.ml
+  (regexp-opt
+   '("exit"
+     "die"
+     "const"
+     "return"
+     "yield"
+     "from"
+     "try"
+     "catch"
+     "finally"
+     "using"
+     "throw"
+     "if"
+     "else"
+     "while"
+     "do"
+     "for"
+     "foreach"
+     "declare"
+     "enddeclare"
+     "instanceof"
+     "as"
+     "super"
+     "switch"
+     "case"
+     "default"
+     "break"
+     "continue"
+     "goto"
+     "echo"
+     "print"
+     "class"
+     "interface"
+     "trait"
+     "insteadof"
+     "extends"
+     "implements"
+     "enum"
+     "attribute"
+     "category"
+     "children"
+     "required"
+     "function"
+     "new"
+     "clone"
+     "var"
+     "callable"
+     "eval"
+     "include"
+     "include_once"
+     "require"
+     "require_once"
+     "namespace"
+     "use"
+     "global"
+     "isset"
+     "empty"
+     "__halt_compiler"
+     "__compiler_halt_offset__"
+     "static"
+     "abstract"
+     "final"
+     "private"
+     "protected"
+     "public"
+     "unset"
+     "==>"
+     "list"
+     "array"
+     "OR"
+     "AND"
+     "XOR"
+     "dict"
+     "keyset"
+     "shape"
+     "type"
+     "newtype"
+     "where"
+     "await"
+     "vec"
+     "varray"
+     "darray"
+     "inout"
+     "async"
+     "tuple"
+     "__CLASS__"
+     "__TRAIT__"
+     "__FUNCTION__"
+     "__METHOD__"
+     "__LINE__"
+     "__FILE__"
+     "__DIR__"
+     "__NAMESPACE__"
+     "__COMPILER_FRONTEND__"
+     ;; Treat self:: and static:: as keywords.
+     "self"
+     "parent")
+   'symbols))
+
+(defconst hack--type-regex
+  (rx
+   (or
+    (seq
+     (? "?")
+     symbol-start
+     (or
+      ;; Built-in classes, based on Classes in
+      ;; naming_special_names.ml, excluding self/parent (which we've
+      ;; treated as keywords above).
+      "stdClass"
+      "classname"
+      "typename"
+
+      ;; Built-in types, based on Typehints in naming_special_names.ml.
+      "void"
+      "resource"
+      "num"
+      "arraykey"
+      "noreturn"
+      "mixed"
+      "nonnull"
+      "this"
+      "dynamic"
+      "int"
+      "bool"
+      "float"
+      "string"
+      "array"
+      "darray"
+      "varray"
+      "varray_or_darray"
+      "integer"
+      "boolean"
+      "double"
+      "real"
+      "callable"
+      "object"
+      "unset"
+      ;; User-defined type.
+      (seq
+       (0+ "_")
+       (any upper)
+       (* (or (syntax word) (syntax symbol)))))
+     symbol-end)
+    ;; We also highlight _ as a type, but don't highlight ?_.
+    (seq symbol-start "_" symbol-end))))
+
+(defun hack--in-xhp-p (pos)
+  "Is POS inside an XHP expression?
+
+Returns t if we're in a text context, and nil if we're
+interpolating inside the XHP expression."
+  (let ((expression-start-pos
+         (get-text-property pos 'hack-xhp-expression)))
+    (when expression-start-pos
+      (let* ((ppss (save-excursion (syntax-ppss pos)))
+             (paren-pos (nth 1 ppss))
+             (interpolation-p
+              (when (and paren-pos (< expression-start-pos paren-pos))
+                (eq (char-after paren-pos) ?\{))))
+        (not interpolation-p)))))
+
+(defun hack--search-forward-no-xhp (regex limit)
+  "Search forward for REGEX up to LIMIT, ignoring occurrences inside XHP blocks."
+  (let ((end-pos nil)
+        (match-data nil)
+        (case-fold-search nil))
+    (save-excursion
+      (while (and (not end-pos)
+                  (re-search-forward regex limit t))
+        (unless (hack--in-xhp-p (point))
+          (setq match-data (match-data))
+          (setq end-pos (point)))))
+    (when match-data
+      (set-match-data match-data)
+      (goto-char end-pos))))
+
+(defun hack--search-forward-keyword (limit)
+  "Search forward from point for an occurrence of a keyword."
+  (hack--search-forward-no-xhp hack--keyword-regex limit))
+
+(defun hack--search-forward-type (limit)
+  "Search forward from point for an occurrence of a type name."
+  (hack--search-forward-no-xhp hack--type-regex limit))
+
+(defconst hack--user-constant-regex
+  (rx
+   symbol-start
+   ;; Constants are all in upper case, and cannot start with a
+   ;; digit.
+   (seq (any upper "_")
+        (+ (any upper "_" digit)))
+   symbol-end))
+
+(defun hack--search-forward-constant (limit)
+  "Search forward from point for an occurrence of a constant."
+  (hack--search-forward-no-xhp
+   ;; null is also a type in Hack, but we highlight it as a
+   ;; constant. It's going to occur more often as a value than a type.
+   (regexp-opt '("null" "true" "false") 'symbol)
+   limit))
+
+(defun hack--search-forward-user-constant (limit)
+  "Search forward from point for an occurrence of a constant."
+  (hack--search-forward-no-xhp hack--user-constant-regex
+                               limit))
+
+(defun hack--search-forward-variable (limit)
+  "Search forward from point for an occurrence of a variable."
+  (hack--search-forward-no-xhp
+   (rx symbol-start
+       "$" (group (+ (or (syntax word) (syntax symbol))))
+       symbol-end)
+   limit))
+
+(defun hack--search-forward-dollardollar (limit)
+  "Search forward from point for an occurrence of $$."
+  (hack--search-forward-no-xhp
+   (rx symbol-start "$$" symbol-end)
+   limit))
+
 (defvar hack-font-lock-keywords
   `(
     (,hack--header-regex
@@ -440,182 +695,28 @@ If we find one, move point to its end, and set match data."
     ;; keyword.
     (hack-font-lock-xhp
      (0 'default))
-    
-    ;; Keywords, based on hphp.ll.
-    ;; TODO: what about ... and ?? tokens?
-    ;; We don't highlight endforeach etc, as they're syntax errors
-    ;; in full_fidelity_syntax_error.ml
-    (,(regexp-opt
-       '("exit"
-         "die"
-         "const"
-         "return"
-         "yield"
-         "from"
-         "try"
-         "catch"
-         "finally"
-         "using"
-         "throw"
-         "if"
-         "else"
-         "while"
-         "do"
-         "for"
-         "foreach"
-         "declare"
-         "enddeclare"
-         "instanceof"
-         "as"
-         "super"
-         "switch"
-         "case"
-         "default"
-         "break"
-         "continue"
-         "goto"
-         "echo"
-         "print"
-         "class"
-         "interface"
-         "trait"
-         "insteadof"
-         "extends"
-         "implements"
-         "enum"
-         "attribute"
-         "category"
-         "children"
-         "required"
-         "function"
-         "new"
-         "clone"
-         "var"
-         "callable"
-         "eval"
-         "include"
-         "include_once"
-         "require"
-         "require_once"
-         "namespace"
-         "use"
-         "global"
-         "isset"
-         "empty"
-         "__halt_compiler"
-         "__compiler_halt_offset__"
-         "static"
-         "abstract"
-         "final"
-         "private"
-         "protected"
-         "public"
-         "unset"
-         "==>"
-         "list"
-         "array"
-         "OR"
-         "AND"
-         "XOR"
-         "dict"
-         "keyset"
-         "shape"
-         "type"
-         "newtype"
-         "where"
-         "await"
-         "vec"
-         "varray"
-         "darray"
-         "inout"
-         "async"
-         "tuple"
-         "__CLASS__"
-         "__TRAIT__"
-         "__FUNCTION__"
-         "__METHOD__"
-         "__LINE__"
-         "__FILE__"
-         "__DIR__"
-         "__NAMESPACE__"
-         "__COMPILER_FRONTEND__")
-       'symbols)
-     . font-lock-keyword-face)
-    ;; self:: and parent:: have special meaning in classes in
-    ;; Hack/PHP. Syntactically, they're like static::.
-    (,(regexp-opt '("self" "parent") 'symbols)
-     . font-lock-keyword-face)
-    ;; Type definitions.
-    (,(rx
-       (? "?")
-       symbol-start
-       (or
-        ;; Built-in classes, based on Classes in
-        ;; naming_special_names.ml, excluding self/parent (which we've
-        ;; treated as keywords above).
-        "stdClass"
-        "classname"
-        "typename"
 
-        ;; Built-in types, based on Typehints in naming_special_names.ml.
-        "void"
-        "resource"
-        "num"
-        "arraykey"
-        "noreturn"
-        "mixed"
-        "nonnull"
-        "this"
-        "dynamic"
-        "int"
-        "bool"
-        "float"
-        "string"
-        "array"
-        "darray"
-        "varray"
-        "varray_or_darray"
-        "integer"
-        "boolean"
-        "double"
-        "real"
-        "callable"
-        "object"
-        "unset"
-        ;; User-defined type.
-        (seq
-         (0+ "_")
-         (any upper)
-         (* (or (syntax word) (syntax symbol)))))
-       symbol-end)
-     . font-lock-type-face)
-    ;; We also highlight _ as a type, but don't highlight ?_.
-    (,(regexp-opt '("_") 'symbols)
-     . font-lock-type-face)
-    (,(regexp-opt
-       '("null"
-         "true"
-         "false")
-       'symbols)
-     . font-lock-constant-face)
+    (hack--search-forward-keyword
+     (0 'font-lock-keyword-face))
+
+    (hack--search-forward-type
+     (0 'font-lock-type-face))
+
+    (hack--search-forward-constant
+     (0 'font-lock-constant-face))
+
+    ;; We use font-lock-variable-name-face for consistency with c-mode.
+    (hack--search-forward-user-constant
+     (0 'font-lock-variable-name-face))
 
     ;; $$ is a special variable used with the pipe operator
     ;; |>. Highlight the entire string, to avoid confusion with $s.
-    (,(rx symbol-start "$$")
-     . font-lock-variable-name-face)
+    (hack--search-forward-dollardollar
+     (0 'font-lock-variable-name-face))
     ;; Highlight variables that start with $, e.g. $foo. Don't
     ;; highlight the $, to make the name easier to read (consistent with php-mode).
-    (,(rx symbol-start "$" (group (+ (or (syntax word) (syntax symbol)))) symbol-end)
-     1 font-lock-variable-name-face)
-
-    ;; Constants are all in upper case, and cannot start with a
-    ;; digit. We use font-lock-variable-name-face for consistency with
-    ;; c-mode.
-    (,(rx symbol-start
-          (any upper "_")
-          (+ (any upper "_" digit))
-          symbol-end)
-     . font-lock-variable-name-face)
+    (hack--search-forward-variable
+     (1 'font-lock-variable-name-face))
 
     ;; Highlight function names.
     (,(rx symbol-start
