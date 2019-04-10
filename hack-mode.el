@@ -835,7 +835,9 @@ Ignore semicolons in strings and comments."
             (prev-syntax (syntax-after (1- (point)))))
         (unless (or (eq prev-char ?\n)
                     ;; 0 is the syntax code for whitespace.
-                    (eq 0 (car-safe prev-syntax)))
+                    (eq 0 (car-safe prev-syntax))
+                    ;; Ignore whitespace in comments.
+                    (nth 4 (syntax-ppss)))
           (throw 'done nil)))
 
       (backward-char))))

@@ -126,6 +126,16 @@ $x = <div>
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-xhp-in-comment ()
+  "XHP expressions in comments should not affect indentation."
+  (let ((src "function foo(): void {\n  $x = 123;\n  // return <p>H'el'lo</p>;\n  1;\n}"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (defmacro with-hack-buffer (src &rest body)
   "Insert SRC in a temporary `hack-mode' buffer, apply syntax highlighting,
 then run BODY."
