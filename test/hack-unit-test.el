@@ -473,6 +473,14 @@ baz()"
      (should
       (not (eq (face-at-point) 'font-lock-keyword-face))))))
 
+(ert-deftest hack-xhp-self-closing ()
+  "Ensure we don't think a self-closing tag ends an XHP block"
+  (with-hack-buffer "$p = <div>\n    <p>\n  <Stuff/>\n  </p>\n  Hello\n</div>;\n"
+    (search-forward "H")
+    (should
+     (should
+      (not (eq (face-at-point) 'font-lock-type-face))))))
+
 (ert-deftest hack-xhp-in-comments ()
   "Don't try to parse XHP in comments."
   (with-hack-buffer "// <foo>\n$x = 'bar';"

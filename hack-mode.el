@@ -348,7 +348,8 @@ If we find one, move point to its end, and set match data."
           (and tags (search-forward "<" limit t))
 
         (let ((close-p (looking-at-p "/"))
-              tag-name)
+              tag-name
+              self-closing-p)
           (when close-p
             (forward-char 1))
           ;; Get the name of the current tag.
@@ -356,7 +357,14 @@ If we find one, move point to its end, and set match data."
            (rx (+ (or (syntax word) (syntax symbol)))))
           (setq tag-name (match-string 0))
           (search-forward ">" limit)
+          (save-excursion
+            (backward-char 2)
+            (when (looking-at "/>")
+              (setq self-closing-p t)))
           (cond
+           (self-closing-p
+            ;; A self-closing tag doesn't need pushing to the stack.
+            nil)
            ((and close-p (string= tag-name (car tags)))
             ;; A balanced closing tag.
             (pop tags))
