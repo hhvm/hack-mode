@@ -85,6 +85,19 @@ EOT;
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-left-shift ()
+  (let ((src "<?hh
+
+$foo = 1 << 2;
+bar();
+"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-nullable-attribute ()
   (let ((src "<?hh
 
@@ -171,6 +184,35 @@ then run BODY."
     (should
      (eq (syntax-class (syntax-after (point)))
          1))))
+
+(ert-deftest hack-syntax-angle-bracket-shift ()
+  "Left and right shift are not matched pairs of angle brackets."
+  (with-hack-buffer "1 << 2;"
+    (search-forward "<")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))
+    (forward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1)))
+  (with-hack-buffer "1 >> 2;"
+    (search-forward ">")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))
+    (forward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
+(with-hack-buffer "3 >> 4;"
+  (dotimes (_ 2)
+    (search-forward ">"))
+  (backward-char)
+  (syntax-class (syntax-after (point))))
 
 (ert-deftest hack-syntax-angle-bracket-lambda ()
   "Lambdas are not a matched pair."

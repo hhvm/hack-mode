@@ -145,6 +145,8 @@ If we find one, move point to its end, and set match data."
   "Ensure < is not treated a < delimiter in other syntactic contexts."
   (let ((start (1- (point))))
     (when (or (looking-at "?hh")
+              ;; Ignore left shift operators 1 << 2.
+              (looking-at "<")
               ;; If there's a following space, assume it's 1 < 2.
               (looking-at " "))
       (put-text-property start (1+ start)
@@ -154,10 +156,14 @@ If we find one, move point to its end, and set match data."
   "Ensure > in -> or => isn't treated as a > delimiter."
   (let* ((start (1- (point))))
     (when (> start (point-min))
-      (let ((prev-char (char-before start)))
-        ;; If there's a preceding space, we assume it's 1 < 2 rather than
+      (let ((prev-char (char-before start))
+            (next-char (char-after (1+ start))))
+        ;; If there's a preceding space, we assume it's 1 > 2 rather than
         ;; a type vec < int > with excess space.
-        (when (memq prev-char (list ?= ?- ?\ ))
+        (when (or (memq prev-char (list ?= ?- ?\ ))
+                  ;; Also ignore 1 >> 2.
+                  (and (eq prev-char ?\ ) (eq next-char ?>))
+                  (and (eq prev-char ?>) (eq next-char ?\ )))
           (put-text-property start (1+ start)
 		             'syntax-table (string-to-syntax ".")))))))
 
