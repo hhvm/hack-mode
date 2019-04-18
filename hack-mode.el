@@ -1094,6 +1094,29 @@ Ensure point is still on the same part of the line afterwards."
       (hack-xhp-indent-preserve-point indent))
     indent))
 
+(defun hack--paren-depth-for-indent (pos)
+  "Return the number of parentheses around POS.
+Repeated parens on the same line are consider a single paren."
+  (let ((depth 0)
+        ;; Keep tracking of which line we saw each paren on. Since
+        ;; calculating line number is O(n), just track the start
+        ;; position of each line.
+        (prev-paren-line-start nil))
+    (save-excursion
+      (goto-char pos)
+      (catch 'done
+        (while t
+          (let* ((ppss (syntax-ppss))
+                 (paren-start (nth 1 ppss)))
+            (if paren-start
+                (progn
+                  (goto-char paren-start)
+                  (unless (eq (line-beginning-position) prev-paren-line-start)
+                    (setq depth (1+ depth)))
+                  (setq prev-paren-line-start (line-beginning-position)))
+              (throw 'done t))))))
+    depth))
+
 (defun hack-indent-line ()
   "Indent the current line of Hack code.
 Preserves point position in the line where possible."
@@ -1101,8 +1124,9 @@ Preserves point position in the line where possible."
   (let* ((syntax-bol (syntax-ppss (line-beginning-position)))
          (in-multiline-string-p (nth 3 syntax-bol))
          (point-offset (- (current-column) (current-indentation)))
+         (paren-depth (hack--paren-depth-for-indent (line-beginning-position)))
+
          (ppss (syntax-ppss (line-beginning-position)))
-         (paren-depth (nth 0 ppss))
          (current-paren-pos (nth 1 ppss))
          (text-after-paren
           (when current-paren-pos

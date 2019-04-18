@@ -55,6 +55,16 @@ function foo(): int {
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-repeated-parens ()
+  "Repeated parens on the same line should not increase the indent"
+  (let ((src "foo(foo(\n  \"baz\"\n));"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-method ()
   "Methods on a separate line should be indented."
   (let ((src "<?hh
