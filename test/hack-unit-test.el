@@ -265,6 +265,14 @@ then run BODY."
     (search-forward "h")
     (should (eq (face-at-point) 'font-lock-keyword-face))))
 
+(ert-deftest hack-highlight-built-in-constant ()
+  (with-hack-buffer "true"
+    (search-forward "t")
+    (should (eq (face-at-point) 'font-lock-constant-face)))
+  (with-hack-buffer "foo_true();"
+    (search-forward "t")
+    (should (not (eq (face-at-point) 'font-lock-constant-face)))))
+
 (ert-deftest hack-highlight-heredoc ()
   (with-hack-buffer "$x = <<<EOT
 hello world

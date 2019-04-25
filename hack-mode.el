@@ -665,7 +665,7 @@ interpolating inside the XHP expression."
   (hack--search-forward-no-xhp
    ;; null is also a type in Hack, but we highlight it as a
    ;; constant. It's going to occur more often as a value than a type.
-   (regexp-opt '("null" "true" "false") 'symbol)
+   (regexp-opt '("null" "true" "false") 'symbols)
    limit))
 
 (defun hack--search-forward-user-constant (limit)
