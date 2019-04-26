@@ -109,6 +109,24 @@ EOT;
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-class-attribute ()
+  (let ((src "<?hh
+
+class MyClass {
+  <<__Override>>
+  public async function foo(): Awaitable<vec<Thing>> {
+    if (true) {
+      return null;
+    }
+  }
+}
+"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
 (ert-deftest hack-indent-left-shift ()
   (let ((src "<?hh
 

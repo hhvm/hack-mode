@@ -165,7 +165,7 @@ If we find one, move point to its end, and set match data."
   (let ((start (1- (point))))
     (when (or (looking-at "?hh")
               ;; Ignore left shift operators 1 << 2.
-              (looking-at "<")
+              (looking-at "< ")
               ;; If there's a following space, assume it's 1 < 2.
               (looking-at " "))
       (put-text-property start (1+ start)
@@ -176,13 +176,16 @@ If we find one, move point to its end, and set match data."
   (let* ((start (1- (point))))
     (when (> start (point-min))
       (let ((prev-char (char-before start))
-            (next-char (char-after (1+ start))))
+	    (prev-prev-char (char-before (1- start)))
+            (next-char (char-after (1+ start)))
+	    (next-next-char (char-after (+ start 2))))
         ;; If there's a preceding space, we assume it's 1 > 2 rather than
         ;; a type vec < int > with excess space.
         (when (or (memq prev-char (list ?= ?- ?\ ))
-                  ;; Also ignore 1 >> 2.
-                  (and (eq prev-char ?\ ) (eq next-char ?>))
-                  (and (eq prev-char ?>) (eq next-char ?\ )))
+                  ;; Also ignore 1 >> 2, first char.
+                  (and (eq prev-char ?\ ) (eq next-char ?>) (eq next-next-char ?\ ))
+		  ;; Ignore 1 >> 2, second car.
+                  (and (eq prev-prev-char ?\ ) (eq prev-char ?>) (eq next-char ?\ )))
           (put-text-property start (1+ start)
 		             'syntax-table (string-to-syntax ".")))))))
 
@@ -1132,7 +1135,7 @@ Repeated parens on the same line are consider a single paren."
   "Does STR end with an infix operator?"
   (string-match-p
    (rx
-    (or symbol-end space)
+    space
     ;; https://docs.hhvm.com/hack/expressions-and-operators/operator-precedence
     (or "*" "/" "%" "+" "-" "."
 	"<<" ">>" "<" "<=" ">" ">="
