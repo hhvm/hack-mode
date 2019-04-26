@@ -463,7 +463,6 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
 
 (defconst hack--keyword-regex
   ;; Keywords, based on hphp.ll.
-  ;; TODO: what about ... and ?? tokens?
   ;; We don't highlight endforeach etc, as they're syntax errors
   ;; in full_fidelity_syntax_error.ml
   (regexp-opt
