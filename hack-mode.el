@@ -123,12 +123,18 @@ See <http://php.net/manual/en/language.types.string.php>."
   (defconst hack--header-regex
     ;; <?hh can only occur on the first line. The only thing it may be preceded
     ;; by is a shebang. It's compulsory, except in .hack files. See hphp.ll.
-    ;; TODO: handle //strict, //decl.
     (rx
      (or
       buffer-start
       (seq "#!" (* not-newline) "\n"))
-     (group "<?hh")))
+     (group "<?hh")
+     ;; Match // strict if it's present.
+     ;; See full_fidelity_parser.ml which calls FileInfo.parse_mode.
+     (? (0+ space)
+	"//"
+	(0+ space)
+	(group (or "strict" "partial" "experimental"))
+	(or space "\n"))))
 
   ;; TODO: Check against next_xhp_element_token in full_fidelity_lexer.ml
   (defconst hack-xhp-start-regex
@@ -717,7 +723,8 @@ interpolating inside the XHP expression."
 (defvar hack-font-lock-keywords
   `(
     (,hack--header-regex
-     (1 font-lock-keyword-face))
+     (1 font-lock-keyword-face)
+     (2 font-lock-keyword-face t t))
     ;; Handle XHP first, so we don't confuse <p>vec</p> with the vec
     ;; keyword.
     (hack-font-lock-xhp

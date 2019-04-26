@@ -307,8 +307,15 @@ then run BODY."
          1))))
 
 (ert-deftest hack-highlight-header ()
+  "The <?hh should be highlighted, if present."
   (with-hack-buffer "<?hh // strict"
     (search-forward "h")
+    (should (eq (face-at-point) 'font-lock-keyword-face))))
+
+(ert-deftest hack-highlight-header-mode ()
+  "The mode in the header should be highlighted, if present."
+  (with-hack-buffer "<?hh // strict "
+    (search-forward "s")
     (should (eq (face-at-point) 'font-lock-keyword-face))))
 
 (ert-deftest hack-highlight-built-in-constant ()
