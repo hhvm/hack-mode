@@ -1094,7 +1094,7 @@ Return nil otherwise."
        ;; DEFAULT: not first stmt after xhp, indent normally
        (t nil)))))
 
-(defun hack-xhp-indent-preserve-point (offset)
+(defun hack--indent-preserve-point (offset)
   "Indent the current line by OFFSET spaces.
 Ensure point is still on the same part of the line afterwards."
   (let ((point-offset (- (current-column) (current-indentation))))
@@ -1151,7 +1151,7 @@ Preserves point position in the line where possible."
   (if (hack--in-xhp-p (point))
       (let ((indent (hack-xhp-indent-offset)))
 	(when indent
-	  (hack-xhp-indent-preserve-point indent)))
+	  (hack--indent-preserve-point indent)))
     (hack--indent-line)))
 
 (defun hack--indent-line ()
@@ -1190,7 +1190,7 @@ Preserves point position in the line where possible."
       ;; Don't modify lines that don't start with *, to avoid changing the indentation of commented-out code.
       (when (or (string-match-p (rx bol (0+ space) "*") current-line)
                 (string= "" current-line))
-        (hack-xhp-indent-preserve-point (1+ (* hack-indent-offset paren-depth)))))
+        (hack--indent-preserve-point (1+ (* hack-indent-offset paren-depth)))))
      ;; Indent according to the last paren position, if there is text
      ;; after the paren. For example:
      ;; foo(bar,
@@ -1202,7 +1202,7 @@ Preserves point position in the line where possible."
         (save-excursion
           (goto-char current-paren-pos)
           (setq open-paren-column (current-column)))
-        (hack-xhp-indent-preserve-point (1+ open-paren-column))))
+        (hack--indent-preserve-point (1+ open-paren-column))))
      ;; Indent according to the amount of nesting.
      (t
       (let ((current-line (s-trim current-line))
@@ -1230,7 +1230,7 @@ Preserves point position in the line where possible."
                   (s-starts-with-p "|>" current-line))
           (setq paren-depth (1+ paren-depth))))
 
-      (hack-xhp-indent-preserve-point (* hack-indent-offset paren-depth))))
+      (hack--indent-preserve-point (* hack-indent-offset paren-depth))))
     ;; Point is now at the beginning of indentation, restore it
     ;; to its original position (relative to indentation).
     (when (>= point-offset 0)
