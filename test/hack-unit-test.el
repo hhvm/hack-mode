@@ -65,6 +65,20 @@ function foo(): int {
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-operator ()
+  "After an infix operator, we should increase the indent."
+  (let ((src "<?hh
+
+$foo =
+  bar();
+"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-method ()
   "Methods on a separate line should be indented."
   (let ((src "<?hh

@@ -1128,6 +1128,22 @@ Repeated parens on the same line are consider a single paren."
               (throw 'done t))))))
     depth))
 
+(defun hack--ends-with-infix-p (str)
+  "Does STR end with an infix operator?"
+  (string-match-p
+   (rx
+    (or symbol-end space)
+    ;; https://docs.hhvm.com/hack/expressions-and-operators/operator-precedence
+    (or "*" "/" "%" "+" "-" "."
+	"<<" ">>" "<" "<=" ">" ">="
+	"==" "!=" "===" "!==" "<=>"
+	"&" "^" "|" "&&" "||" "?:" "??" "|>"
+	"=" "+=" "-=" ".=" "*=" "/=" "%=" "<<=" ">>=" "&=" "^=" "|="
+	"instanceof" "is" "as" "?as")
+    (0+ space)
+    line-end)
+   str))
+
 (defun hack-indent-line ()
   "Indent the current line of Hack code.
 Preserves point position in the line where possible."
@@ -1189,14 +1205,30 @@ Preserves point position in the line where possible."
         (hack-xhp-indent-preserve-point (1+ open-paren-column))))
      ;; Indent according to the amount of nesting.
      (t
-      ;; Increase indent for lines that are method calls or pipe expressions.
-      ;;
-      ;; $foo
-      ;;   ->bar(); <- this line
-      (when (or (s-starts-with-p "->" (s-trim current-line))
-                (s-starts-with-p "?->" (s-trim current-line))
-                (s-starts-with-p "|>" (s-trim current-line)))
-        (setq paren-depth (1+ paren-depth)))
+      (let ((current-line (s-trim current-line))
+	    prev-line)
+	(save-excursion
+          ;; Try to go back one line.
+          (when (zerop (forward-line -1))
+            (setq prev-line
+		  (buffer-substring (line-beginning-position) (line-end-position)))))
+
+	;; Increase indent if the past line ended with an infix
+	;; operator, so we get
+	;; $x =
+	;;   foo();
+	(when (and prev-line
+		   (hack--ends-with-infix-p prev-line))
+	  (setq paren-depth (1+ paren-depth)))
+
+	;; Increase indent for lines that are method calls or pipe expressions.
+	;;
+	;; $foo
+	;;   ->bar(); <- this line
+	(when (or (s-starts-with-p "->" current-line)
+                  (s-starts-with-p "?->" current-line)
+                  (s-starts-with-p "|>" current-line))
+          (setq paren-depth (1+ paren-depth))))
 
       (hack-xhp-indent-preserve-point (* hack-indent-offset paren-depth))))
     ;; Point is now at the beginning of indentation, restore it
