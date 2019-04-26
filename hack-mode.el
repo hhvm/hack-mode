@@ -1085,15 +1085,6 @@ Ensure point is still on the same part of the line afterwards."
     (when (>= point-offset 0)
       (move-to-column (+ (current-indentation) point-offset)))))
 
-(defun hack-xhp-indent ()
-  "Perform XHP indentation if appropriate."
-  (interactive)
-  (let ((indent (hack-xhp-indent-offset)))
-    (when indent
-      (hack-xhp-indent-debug "xhp indent!!!")
-      (hack-xhp-indent-preserve-point indent))
-    indent))
-
 (defun hack--paren-depth-for-indent (pos)
   "Return the number of parentheses around POS.
 Repeated parens on the same line are consider a single paren."
@@ -1121,6 +1112,14 @@ Repeated parens on the same line are consider a single paren."
   "Indent the current line of Hack code.
 Preserves point position in the line where possible."
   (interactive)
+  (if (hack--in-xhp-p (point))
+      (let ((indent (hack-xhp-indent-offset)))
+	(when indent
+	  (hack-xhp-indent-preserve-point indent)))
+    (hack--indent-line)))
+
+(defun hack--indent-line ()
+  "Indent the current line of non-XHP Hack code."
   (let* ((syntax-bol (syntax-ppss (line-beginning-position)))
          (in-multiline-string-p (nth 3 syntax-bol))
          (point-offset (- (current-column) (current-indentation)))
@@ -1185,11 +1184,7 @@ Preserves point position in the line where possible."
     (when (>= point-offset 0)
       (move-to-column (+ (current-indentation) point-offset)))))
 
-(defun hack-xhp-indent-line ()
-  "Indent current line."
-  (interactive)
-  (if (not (hack-xhp-indent))
-      (hack-indent-line)))
+(defalias 'hack-xhp-indent-line 'hack-indent-line)
 
 ;; hh_server can choke if you symlink your www root
 (setq find-file-visit-truename t)
@@ -1256,7 +1251,7 @@ Preserves point position in the line where possible."
        hack--syntax-propertize-function)
 
   (setq-local compile-command (concat hack-client-program-name " --from emacs"))
-  (setq-local indent-line-function #'hack-xhp-indent-line)
+  (setq-local indent-line-function #'hack-indent-line)
   (setq-local comment-start "// ")
   (setq-local fill-paragraph-function #'hack-fill-paragraph)
   (setq imenu-generic-expression
