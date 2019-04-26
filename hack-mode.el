@@ -201,6 +201,31 @@ If we find one, move point to its end, and set match data."
    (">"
     (0 (ignore (hack--propertize-gt))))))
 
+(defun hack-font-lock-fallthrough (limit)
+  "Search for FALLTHROUGH comments."
+  (let ((case-fold-search nil)
+	(found-pos nil)
+	(match-data nil))
+    ;; FALLTHROUGH must start with //, and can have any text afterwards. See
+    ;; full_fidelity_lexer.ml.
+    (save-excursion
+      (while (and (not found-pos)
+		  (search-forward "FALLTHROUGH" limit t))
+	(let* ((ppss (syntax-ppss))
+	       (in-comment (nth 4 ppss))
+	       (comment-start (nth 8 ppss)))
+	  (when in-comment
+	    (save-excursion
+	      (goto-char comment-start)
+	      (when (re-search-forward
+		     (rx point "//" (0+ whitespace) (group "FALLTHROUGH"))
+		     limit t)
+		(setq found-pos (point))
+		(setq match-data (match-data))))))))
+    (when found-pos
+      (set-match-data match-data)
+      (goto-char found-pos))))
+
 (defun hack-font-lock-unsafe (limit)
   "Search for UNSAFE comments."
   (let ((case-fold-search nil)
@@ -727,13 +752,9 @@ interpolating inside the XHP expression."
            (+ (or (syntax word) (syntax symbol)))
            symbol-end))
      1 font-lock-function-name-face)
-    ;; FALLTHROUGH and UNSAFE comments, based on full_fidelity_lexer.ml.
-    ;; TODO: UNSAFE_EXPR according to https://docs.hhvm.com/hack/typechecker/special
-    (,(rx "//"
-          (+ space)
-          (or "FALLTHROUGH" "UNSAFE"))
-     . font-lock-function-name-face)
 
+    (hack-font-lock-fallthrough
+     (1 'font-lock-keyword-face t))
     (hack-font-lock-unsafe
      (1 'error t))
     (hack-font-lock-unsafe-expr

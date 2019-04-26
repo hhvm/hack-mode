@@ -436,9 +436,25 @@ baz()"
     (search-forward "f")
     (should (not (eq (face-at-point) 'font-lock-variable-name-face)))))
 
+(ert-deftest hack-highlight-fallthrough ()
+  "Highlight fallthrough comments."
+  (with-hack-buffer "// FALLTHROUGH"
+    (search-forward "F")
+    (should (eq (face-at-point) 'font-lock-keyword-face)))
+  ;; Ensure we don't highlight FALLTHROUGH in other contexts.
+  (with-hack-buffer "/* FALLTHROUGH */"
+    (search-forward "F")
+    (should (not (eq (face-at-point) 'error))))
+  (with-hack-buffer "$x = \" FALLTHROUGH\";"
+    (search-forward "F")
+    (should (not (eq (face-at-point) 'error)))))
+
 (ert-deftest hack-highlight-unsafe-block ()
   "Highlight unsafe blocks."
   (with-hack-buffer "// UNSAFE"
+    (search-forward "U")
+    (should (eq (face-at-point) 'error)))
+  (with-hack-buffer "//UNSAFE"
     (search-forward "U")
     (should (eq (face-at-point) 'error)))
   ;; Ensure we don't highlight UNSAFE in other contexts.
