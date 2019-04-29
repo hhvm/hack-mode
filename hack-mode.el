@@ -412,7 +412,7 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
             (forward-char 1))
           ;; Get the name of the current tag.
           (re-search-forward
-           (rx (+ (or (syntax word) (syntax symbol)))))
+           (rx (+ (or (syntax word) (syntax symbol) ":" "-"))))
           (setq tag-name (match-string 0))
 
           (when propertize-tags

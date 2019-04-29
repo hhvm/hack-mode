@@ -562,6 +562,16 @@ baz()"
     (search-forward "H")
     (should (not (eq (face-at-point) 'error)))))
 
+(ert-deftest hack-highlight-xhp-tag ()
+  "Set font face on tag names in XHP expressions."
+  (with-hack-buffer "<foo>hello</foo>"
+    (search-forward "f")
+    (should (eq (face-at-point) 'hack-xhp-tag)))
+  ;; - is symbol constituent in XHP.
+  (with-hack-buffer "<foo-bar>hello</foo-bar>"
+    (search-forward "b")
+    (should (eq (face-at-point) 'hack-xhp-tag))))
+
 (ert-deftest hack-xhp-single-quote ()
   "Single quotes inside XHP do not signify a string."
   (with-hack-buffer "$p = <p>Hello'world</p>;"
