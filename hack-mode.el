@@ -664,8 +664,7 @@ interpolating inside the XHP expression."
 (defun hack--search-forward-no-xhp (regex limit)
   "Search forward for REGEX up to LIMIT, ignoring occurrences inside XHP blocks."
   (let ((end-pos nil)
-        (match-data nil)
-        (case-fold-search nil))
+        (match-data nil))
     (save-excursion
       (while (and (not end-pos)
                   (re-search-forward regex limit t))
@@ -678,11 +677,16 @@ interpolating inside the XHP expression."
 
 (defun hack--search-forward-keyword (limit)
   "Search forward from point for an occurrence of a keyword."
-  (hack--search-forward-no-xhp hack--keyword-regex limit))
+  ;; Keywords in PHP are case insensitive. In Hack, it's a syntax
+  ;; error if you use the wrong case, but they're still reserved (so
+  ;; you can't call a function CLASS).
+  (let ((case-fold-search t))
+    (hack--search-forward-no-xhp hack--keyword-regex limit)))
 
 (defun hack--search-forward-type (limit)
   "Search forward from point for an occurrence of a type name."
-  (hack--search-forward-no-xhp hack--type-regex limit))
+  (let ((case-fold-search nil))
+    (hack--search-forward-no-xhp hack--type-regex limit)))
 
 (defconst hack--user-constant-regex
   (rx
@@ -695,11 +699,13 @@ interpolating inside the XHP expression."
 
 (defun hack--search-forward-constant (limit)
   "Search forward from point for an occurrence of a constant."
-  (hack--search-forward-no-xhp
-   ;; null is also a type in Hack, but we highlight it as a
-   ;; constant. It's going to occur more often as a value than a type.
-   (regexp-opt '("null" "true" "false") 'symbols)
-   limit))
+  ;; true, false and null are case insensitive.
+  (let ((case-fold-search t))
+    (hack--search-forward-no-xhp
+     ;; null is also a type in Hack, but we highlight it as a
+     ;; constant. It's going to occur more often as a value than a type.
+     (regexp-opt '("null" "true" "false") 'symbols)
+     limit)))
 
 (defun hack--search-forward-user-constant (limit)
   "Search forward from point for an occurrence of a constant."
@@ -733,11 +739,11 @@ interpolating inside the XHP expression."
     (hack--search-forward-keyword
      (0 'font-lock-keyword-face))
 
-    (hack--search-forward-type
-     (0 'font-lock-type-face))
-
     (hack--search-forward-constant
      (0 'font-lock-constant-face))
+
+    (hack--search-forward-type
+     (0 'font-lock-type-face))
 
     ;; We use font-lock-variable-name-face for consistency with c-mode.
     (hack--search-forward-user-constant

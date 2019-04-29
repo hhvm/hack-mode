@@ -318,9 +318,16 @@ then run BODY."
     (search-forward "s")
     (should (eq (face-at-point) 'font-lock-keyword-face))))
 
+(ert-deftest hack-highlight-keyword ()
+  (with-hack-buffer "class"
+    (should (eq (face-at-point) 'font-lock-keyword-face)))
+  (with-hack-buffer "CLASS"
+    (should (eq (face-at-point) 'font-lock-keyword-face))))
+
 (ert-deftest hack-highlight-built-in-constant ()
   (with-hack-buffer "true"
-    (search-forward "t")
+    (should (eq (face-at-point) 'font-lock-constant-face)))
+  (with-hack-buffer "TRUE"
     (should (eq (face-at-point) 'font-lock-constant-face)))
   (with-hack-buffer "foo_true();"
     (search-forward "t")
