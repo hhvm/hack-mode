@@ -333,6 +333,10 @@ then run BODY."
     (search-forward "t")
     (should (not (eq (face-at-point) 'font-lock-constant-face)))))
 
+(ert-deftest hack-highlight-built-in-function ()
+  (with-hack-buffer "invariant(true, \"hello world\");"
+    (should (eq (face-at-point) 'font-lock-builtin-face))))
+
 (ert-deftest hack-highlight-function-name ()
   (with-hack-buffer "function foo(): void {}"
     (search-forward "fo")
