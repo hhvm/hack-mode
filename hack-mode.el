@@ -720,6 +720,19 @@ interpolating inside the XHP expression."
        symbol-end)
    limit))
 
+(defun hack--search-forward-function-name (limit)
+  "Search forward from point for an occurrence of a function name."
+  (hack--search-forward-no-xhp
+   (rx symbol-start
+       "function"
+       symbol-end
+       (+ space)
+       (group
+        symbol-start
+        (+ (or (syntax word) (syntax symbol)))
+        symbol-end))
+   limit))
+
 (defun hack--search-forward-dollardollar (limit)
   "Search forward from point for an occurrence of $$."
   (hack--search-forward-no-xhp
@@ -758,15 +771,7 @@ interpolating inside the XHP expression."
     (hack--search-forward-variable
      (1 'font-lock-variable-name-face))
 
-    ;; Highlight function names.
-    (,(rx symbol-start
-          "function"
-          symbol-end
-          (+ space)
-          (group
-           symbol-start
-           (+ (or (syntax word) (syntax symbol)))
-           symbol-end))
+    (hack--search-forward-function-name
      1 font-lock-function-name-face)
 
     (hack-font-lock-fallthrough

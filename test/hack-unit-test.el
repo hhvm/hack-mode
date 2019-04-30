@@ -333,6 +333,14 @@ then run BODY."
     (search-forward "t")
     (should (not (eq (face-at-point) 'font-lock-constant-face)))))
 
+(ert-deftest hack-highlight-function-name ()
+  (with-hack-buffer "function foo(): void {}"
+    (search-forward "fo")
+    (should (eq (face-at-point) 'font-lock-function-name-face)))
+  (with-hack-buffer "$x = <p>function foo()</p>"
+    (search-forward "fo")
+    (should (not (eq (face-at-point) 'font-lock-function-name-face)))))
+
 (ert-deftest hack-highlight-heredoc ()
   (with-hack-buffer "$x = <<<EOT
 hello world
