@@ -305,6 +305,23 @@ then run BODY."
     (should
      (eq (syntax-class (syntax-after (point)))
          1))))
+(ert-deftest hack-syntax-hyphen-in-xhp-use ()
+  "XHP usage should treat - as a symbol constituent."
+  (with-hack-buffer "$x = <foo-bar>hello</foo-bar>;"
+    (search-forward "-")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax "_"))))))
+
+(ert-deftest hack-syntax-colon-in-xhp-use ()
+  "XHP usage should treat - as a symbol constituent."
+  (with-hack-buffer "$x = <foo:bar>hello</foo:bar>;"
+    (search-forward ":")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax "_"))))))
 
 (ert-deftest hack-highlight-header ()
   "The <?hh should be highlighted, if present."

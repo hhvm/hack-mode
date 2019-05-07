@@ -393,6 +393,8 @@ If we find one, move point to its end, and set match data."
 
 (defun hack--forward-parse-xhp (start-pos limit &optional propertize-tags)
   "Move point past the XHP expression beginning at START-POS.
+
+If PROPERTIZE-TAGS is nil, apply syntax properties to text.
 If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
   (let ((tags nil))
     (goto-char start-pos)
@@ -406,7 +408,7 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
           (throw 'done t))
 
         (let ((close-p (looking-at-p "/"))
-              tag-name
+              tag-name tag-start tag-end
               self-closing-p)
           (when close-p
             (forward-char 1))
@@ -414,12 +416,19 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
           (re-search-forward
            (rx (+ (or (syntax word) (syntax symbol) ":" "-"))))
           (setq tag-name (match-string 0))
+	  (setq tag-start (match-beginning 0))
+          (setq tag-end (match-end 0))
 
-          (when propertize-tags
-            (let* ((inhibit-modification-hooks t)
-                   (before-change-functions nil))
-              (add-face-text-property (match-beginning 0) (match-end 0)
-                                      'hack-xhp-tag)))
+	  (if propertize-tags
+              (let* ((inhibit-modification-hooks t)
+                     (before-change-functions nil))
+                (add-face-text-property tag-start tag-end 'hack-xhp-tag))
+
+            ;; Ensure : and - are symbol consituents on tag names.
+            (goto-char tag-start)
+            (while (re-search-forward (rx (or ":" "-")) tag-end t)
+              (put-text-property (1- (point)) (point)
+		                 'syntax-table (string-to-syntax "_"))))
 
           (unless (search-forward ">" limit t)
             ;; Can't find the matching close angle bracket, so the XHP
