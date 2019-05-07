@@ -345,9 +345,23 @@ then run BODY."
   (with-hack-buffer "string"
     (should (eq (face-at-point) 'font-lock-type-face))))
 
+(ert-deftest hack-highlight-optional-type ()
+  (with-hack-buffer "?string"
+    ;; Don't highlight the ? as part of the type.
+    (should (not (eq (face-at-point) 'font-lock-type-face)))
+
+    ;; But highlight string as a type.
+    (search-forward "s")
+    (should (eq (face-at-point) 'font-lock-type-face))))
+
 (ert-deftest hack-highlight-xhp-type ()
   (with-hack-buffer "class :foo:bar {}"
     (search-forward "f")
+    (should (eq (face-at-point) 'font-lock-type-face))))
+
+(ert-deftest hack-highlight-xhp-optional-type ()
+  (with-hack-buffer "function foo(): ?:xhpclass {}"
+    (search-forward "x")
     (should (eq (face-at-point) 'font-lock-type-face))))
 
 (ert-deftest hack-highlight-built-in-constant ()

@@ -609,69 +609,68 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
 
 (defconst hack--type-regex
   (rx
-   (or
-    (seq
-     (? "?")
-     (or symbol-start whitespace)
-     (group
-      (or
-       ;; Built-in classes, based on Classes in
-       ;; naming_special_names.ml, excluding self/parent (which we've
-       ;; treated as keywords above).
-       "stdClass"
-       "classname"
-       "typename"
+   (or symbol-start whitespace)
+   (? "?")
+   (group
+    (or
+     ;; Built-in classes, based on Classes in
+     ;; naming_special_names.ml, excluding self/parent (which we've
+     ;; treated as keywords above).
+     "stdClass"
+     "classname"
+     "typename"
 
-       ;; Built-in types, based on Typehints in naming_special_names.ml.
-       "void"
-       "resource"
-       "num"
-       "arraykey"
-       "noreturn"
-       "mixed"
-       "nonnull"
-       "this"
-       "dynamic"
-       "int"
-       "bool"
-       "float"
-       "string"
-       "array"
-       "darray"
-       "varray"
-       "varray_or_darray"
-       "integer"
-       "boolean"
-       "double"
-       "real"
-       "callable"
-       "object"
-       "unset"
+     ;; Built-in types, based on Typehints in naming_special_names.ml.
+     "void"
+     "resource"
+     "num"
+     "arraykey"
+     "noreturn"
+     "mixed"
+     "nonnull"
+     "this"
+     "dynamic"
+     "int"
+     "bool"
+     "float"
+     "string"
+     "array"
+     "darray"
+     "varray"
+     "varray_or_darray"
+     "integer"
+     "boolean"
+     "double"
+     "real"
+     "callable"
+     "object"
+     "unset"
 
-       ;; PHP built-in classes that don't start with an upper case character
-       ;; https://docs.hhvm.com/php/reference/
-       "finfo"
-       "libXMLError"
-       "mysqli"
-       "mysqli_driver"
-       "mysqli_result"
-       "mysqli_stmt"
-       "mysqli_warning"
-       "php_user_filter"
+     ;; Placeholder types, e.g. in vec<_>.
+     "_"
 
-       ;; User-defined type.
-       (seq
-        (0+ "_")
-        (any upper)
-        (* (or (syntax word) (syntax symbol))))
+     ;; PHP built-in classes that don't start with an upper case character
+     ;; https://docs.hhvm.com/php/reference/
+     "finfo"
+     "libXMLError"
+     "mysqli"
+     "mysqli_driver"
+     "mysqli_result"
+     "mysqli_stmt"
+     "mysqli_warning"
+     "php_user_filter"
 
-       ;; XHP type, based on is_next_xhp_class_name in full_fidelity_lexer.ml.
-       (seq
-        ":"
-        (+ (or (syntax word) (syntax symbol) ":" "-")))))
-     symbol-end)
-    ;; We also highlight _ as a type, but don't highlight ?_.
-    (group symbol-start "_" symbol-end))))
+     ;; User-defined type.
+     (seq
+      (0+ "_")
+      (any upper)
+      (* (or (syntax word) (syntax symbol))))
+
+     ;; XHP type, based on is_next_xhp_class_name in full_fidelity_lexer.ml.
+     (seq
+      ":"
+      (+ (or (syntax word) (syntax symbol) ":" "-")))))
+   symbol-end))
 
 (defconst hack--built-in-fun-regex
   (rx
