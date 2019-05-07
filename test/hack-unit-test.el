@@ -335,7 +335,14 @@ then run BODY."
 
 (ert-deftest hack-highlight-built-in-function ()
   (with-hack-buffer "invariant(true, \"hello world\");"
-    (should (eq (face-at-point) 'font-lock-builtin-face))))
+    (should (eq (face-at-point) 'font-lock-builtin-face)))
+  ;; Should be case sensitive.
+  (with-hack-buffer "invariANT(true, \"hello world\");"
+    (should (not (eq (face-at-point) 'font-lock-builtin-face))))
+  ;; Don't confuse functions with methods.
+  (with-hack-buffer "$foo->invariant(true, \"hello world\");"
+    (search-forward "i")
+    (should (not (eq (face-at-point) 'font-lock-builtin-face)))))
 
 (ert-deftest hack-highlight-function-name ()
   (with-hack-buffer "function foo(): void {}"

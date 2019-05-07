@@ -659,8 +659,11 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
     (seq symbol-start "_" symbol-end))))
 
 (defconst hack--built-in-fun-regex
-  (regexp-opt
-   '(
+  (rx
+   (or line-start whitespace)
+   symbol-start
+   (group
+    (or
      ;; https://docs.hhvm.com/hack/reference/function/ HH\foo functions
      "array_key_cast" "asio_get_current_context_idx" "asio_get_running" "asio_get_running_in_context" "autoload_set_paths"
      "class_meth" "clear_instance_memoization" "clear_lsb_memoization" "clear_static_memoization" "could_include"
@@ -1026,8 +1029,8 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
      "xml_set_end_namespace_decl_handler" "xml_set_external_entity_ref_handler" "xml_set_notation_decl_handler" "xml_set_object" "xml_set_processing_instruction_handler"
      "xml_set_start_namespace_decl_handler" "xml_set_unparsed_entity_decl_handler" "zend_version" "zip_close" "zip_entry_close"
      "zip_entry_compressedsize" "zip_entry_compressionmethod" "zip_entry_filesize" "zip_entry_name" "zip_entry_open"
-     "zip_entry_read" "zip_open" "zip_read" "zlib_decode" "zlib_encode")
-   'symbols))
+     "zip_entry_read" "zip_open" "zip_read" "zlib_decode" "zlib_encode"))
+   symbol-end))
 
 (defun hack--in-xhp-p (pos)
   "Is POS inside an XHP expression?
@@ -1159,7 +1162,7 @@ interpolating inside the XHP expression."
      (1 'font-lock-variable-name-face))
 
     (hack--search-forward-built-in-function
-     (0 'font-lock-builtin-face))
+     (1 'font-lock-builtin-face))
 
     (hack--search-forward-function-name
      1 font-lock-function-name-face)
