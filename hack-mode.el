@@ -108,6 +108,20 @@ See <http://php.net/manual/en/language.types.string.php>."
                        'syntax-table
                        (string-to-syntax "|"))))
 
+(defun hack--propertize-xhp-class-name ()
+  "Ensure that : and - in XHP class names are marked as symbol constituents.
+
+Note that the first : is excluded, so :foo:bar is considered to
+be punctuation : followed by symbol foo:bar. This ensures we
+match XHP usage, which looks like <foo:bar>."
+  (let ((start (match-beginning 1))
+        (end (match-end 1)))
+    (save-excursion
+      (goto-char (1+ start))
+      (while (re-search-forward (rx (or ":" "-")) end t)
+        (put-text-property (1- (point)) (point)
+		           'syntax-table (string-to-syntax "_"))))))
+
 (eval-when-compile
   ;; https://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.heredoc
   (defconst hack--heredoc-regex
@@ -135,6 +149,15 @@ See <http://php.net/manual/en/language.types.string.php>."
 	(0+ space)
 	(group (or "strict" "partial" "experimental"))
 	(or space "\n"))))
+
+  (defconst hack--xhp-class-name-regex
+    ;; Based on is_next_xhp_class_name in full_fidelity_lexer.ml.
+    (rx
+     (or whitespace line-start)
+     (group
+      ":"
+      (+ (or (syntax word) (syntax symbol) ":" "-"))))
+    "Regex used to match :foo-bar:baz class names.")
 
   ;; TODO: Check against next_xhp_element_token in full_fidelity_lexer.ml
   (defconst hack-xhp-start-regex
@@ -203,6 +226,8 @@ If we find one, move point to its end, and set match data."
    ;; EOT;
    (hack--heredoc-regex
     (0 (ignore (hack--propertize-heredoc))))
+   (hack--xhp-class-name-regex
+    (0 (ignore (hack--propertize-xhp-class-name))))
    (hack-xhp-start-regex
     (0 (ignore (hack--propertize-xhp))))
    ("<"

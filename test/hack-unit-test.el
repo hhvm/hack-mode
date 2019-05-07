@@ -305,6 +305,34 @@ then run BODY."
     (should
      (eq (syntax-class (syntax-after (point)))
          1))))
+
+(ert-deftest hack-syntax-hyphen-in-xhp-class-name ()
+  "XHP class names should treat - as a symbol constituent."
+  (with-hack-buffer "class :foo-bar {}"
+    (search-forward "-")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax "_"))))))
+
+(ert-deftest hack-syntax-colon-in-xhp-class-name ()
+  "XHP class names should treat inner : as a symbol constituent."
+  (with-hack-buffer "class :foo:bar {}"
+    ;; The first : should be punctuation.
+    (search-forward ":")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax "."))))
+
+    ;; The second : should be a symbol consituent.
+    (forward-char)
+    (search-forward ":")
+    (backward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax "_"))))))
+
 (ert-deftest hack-syntax-hyphen-in-xhp-use ()
   "XHP usage should treat - as a symbol constituent."
   (with-hack-buffer "$x = <foo-bar>hello</foo-bar>;"
