@@ -341,6 +341,15 @@ then run BODY."
   (with-hack-buffer "CLASS"
     (should (eq (face-at-point) 'font-lock-keyword-face))))
 
+(ert-deftest hack-highlight-type ()
+  (with-hack-buffer "string"
+    (should (eq (face-at-point) 'font-lock-type-face))))
+
+(ert-deftest hack-highlight-xhp-type ()
+  (with-hack-buffer "class :foo:bar {}"
+    (search-forward "f")
+    (should (eq (face-at-point) 'font-lock-type-face))))
+
 (ert-deftest hack-highlight-built-in-constant ()
   (with-hack-buffer "true"
     (should (eq (face-at-point) 'font-lock-constant-face)))
