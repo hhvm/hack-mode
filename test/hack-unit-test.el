@@ -392,6 +392,11 @@ then run BODY."
     (search-forward "x")
     (should (eq (face-at-point) 'font-lock-type-face))))
 
+(ert-deftest hack-highlight-xhp-as-type-param ()
+  (with-hack-buffer "function foo(): Awaitable<:xhpclass> {}"
+    (search-forward "x")
+    (should (eq (face-at-point) 'font-lock-type-face))))
+
 (ert-deftest hack-highlight-built-in-constant ()
   (with-hack-buffer "true"
     (should (eq (face-at-point) 'font-lock-constant-face)))

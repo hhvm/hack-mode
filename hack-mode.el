@@ -632,7 +632,7 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
 
 (defconst hack--type-regex
   (rx
-   (or symbol-start whitespace)
+   (or symbol-start whitespace "<")
    (? "?")
    (group
     (or
