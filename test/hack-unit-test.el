@@ -246,6 +246,24 @@ then run BODY."
      (eq (syntax-class (syntax-after (point)))
          1))))
 
+(ert-deftest hack-syntax-angle-bracket-comparison ()
+  (with-hack-buffer "1>=2"
+    (hack--search-up-to ">")
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
+(ert-deftest hack-syntax-angle-bracket-shift-comparison ()
+  (with-hack-buffer "$x >>= $y"
+    (hack--search-up-to ">")
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))
+    (forward-char)
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
 (ert-deftest hack-syntax-angle-bracket-shift-left ()
   "Left shift is not a matched pair of angle brackets."
   (with-hack-buffer "1 << 2;"
@@ -761,6 +779,14 @@ baz()"
     (should
      (eq (syntax-class (syntax-after (point)))
          (car (string-to-syntax "\""))))))
+
+(ert-deftest hack-xhp-interpolation-syntax-angle-bracket ()
+  "< > delimiters inside interpolation are normal delimiters."
+  (with-hack-buffer "$p = <p>{$foo->bar}</p>;"
+    (hack--search-up-to "->")
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax "."))))))
 
 (ert-deftest hack-xhp-interpolation ()
   "Interpolation in XHP blocks occurs between curly braces."

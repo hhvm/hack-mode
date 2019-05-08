@@ -200,30 +200,29 @@ If we find one, move point to its end, and set match data."
       (put-text-property start (1+ start)
 		         'syntax-table (string-to-syntax ".")))))
 
-(defun hack-->-paired-p ()
-  "Return t if the > at point is a paired delimiter.
+(defun hack-->-paired-p (pos)
+  "Return t if the > at POS is a paired delimiter.
 
 E.g. Foo<int> has a paired delimiter, 1 > 2 does not."
-  (let* ((start (1- (point))))
-    (when (> start (1+ (point-min)))
-      (let ((prev-char (char-before start))
-            (prev-prev-char (char-before (1- start)))
-            (next-char (char-after (1+ start))))
-        (not
-         (or
-          ;; If there's a preceding space, we assume it's 1 > 2 rather
-          ;; than vec < int > with excess space.
-          (eq prev-char ?\ )
-          ;; 1 >> 2, looking at the second >.
-          (and (eq prev-char ?>) (eq prev-prev-char ?\ ))
-          ;; $foo->bar and 1<=>2
-          (memq prev-char (list ?= ?-))
-          ;; 1>=2
-          (eq next-char ?=)))))))
+  (when (> pos (1+ (point-min)))
+    (let ((prev-char (char-before pos))
+          (prev-prev-char (char-before (1- pos)))
+          (next-char (char-after (1+ pos))))
+      (not
+       (or
+        ;; If there's a preceding space, we assume it's 1 > 2 rather
+        ;; than vec < int > with excess space.
+        (eq prev-char ?\ )
+        ;; 1 >> 2, looking at the second >.
+        (and (eq prev-char ?>) (eq prev-prev-char ?\ ))
+        ;; $foo->bar and 1<=>2
+        (memq prev-char (list ?= ?-))
+        ;; 1>=2
+        (eq next-char ?=))))))
 
 (defun hack--propertize-gt ()
   "Ensure > in -> or => isn't treated as a > delimiter."
-  (unless (hack-->-paired-p)
+  (unless (hack-->-paired-p (1- (point)))
     (put-text-property (1- (point)) (point)
 		       'syntax-table (string-to-syntax "."))))
 
@@ -448,12 +447,25 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
           (let ((tag-start (1- (point))))
             (save-excursion
               (goto-char prev-tag-end)
-              ;; Ensure that " and ' are just punctuation inside XHP expressions.
+              ;; Ensure XHP contents are punctuation unless interpolated.
               (while (re-search-forward
-                      (rx (or "'" "\"")) tag-start t)
-                (unless (hack--in-xhp-interpolation-p (point) start-pos)
-                  (put-text-property (1- (point)) (point)
-		                     'syntax-table (string-to-syntax ".")))))))
+                      (rx (or "'" "\"" ">")) tag-start t)
+                (cond
+                 ;; Ensure that $foo->bar is not treated as a paired < > inside interpolated XHP.
+                 ((and (eq (char-before) ?>)
+                       ;; We deliberately check for interpolation
+                       ;; *before* the >. This ensures that we don't
+                       ;; get confused if we still think > is a paired
+                       ;; delimiter.
+                       (hack--in-xhp-interpolation-p (1- (point)) start-pos))
+                  (unless (hack-->-paired-p (1- (point)))
+                    (put-text-property (1- (point)) (point)
+		                       'syntax-table (string-to-syntax "."))))
+                 ;; Ensure that " and ' are just punctuation inside XHP expressions.
+                 ((memq (char-before) (list ?\" ?'))
+                  (unless (hack--in-xhp-interpolation-p (point) start-pos)
+                    (put-text-property (1- (point)) (point)
+		                       'syntax-table (string-to-syntax ".")))))))))
 
         (let ((close-p (looking-at-p "/"))
               tag-name tag-name-start tag-name-end
