@@ -3,6 +3,11 @@
 (require 'ert)
 (require 'hack-mode)
 
+(defun hack--search-up-to (char)
+  "Search forward for the next occurrence of CHAR, and put point before it."
+  (search-forward char)
+  (backward-char))
+
 (ert-deftest hack-fill-paragraph-comment ()
   "Comments with // should be filled correctly."
   (with-temp-buffer
@@ -729,6 +734,32 @@ baz()"
     (should
      (should
       (not (eq (face-at-point) 'font-lock-keyword-face))))))
+
+(ert-deftest hack-xhp-string-contents-syntax ()
+  "Syntax delimiters inside XHP tags should be punctuation."
+  (with-hack-buffer "$p = <p>\"</p>;"
+    (hack--search-up-to "\"")
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax ".")))))
+  (with-hack-buffer "$p = <p>'</p>;"
+    (hack--search-up-to "'")
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax "."))))))
+
+(ert-deftest hack-xhp-interpolation-syntax ()
+  "Syntax delimiters inside interpolation are normal delimiters."
+  (with-hack-buffer "$p = <p>{\"foo\"}</p>;"
+    (hack--search-up-to "\"")
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax "\"")))))
+  (with-hack-buffer "$p = <p>{'foo'}</p>;"
+    (hack--search-up-to "'")
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax "\""))))))
 
 (ert-deftest hack-xhp-interpolation ()
   "Interpolation in XHP blocks occurs between curly braces."

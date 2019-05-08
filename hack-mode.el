@@ -62,7 +62,7 @@
   :group 'hack-mode)
 
 (defun hack--propertize-xhp ()
-  "Syntax highlight XHP blocks."
+  "Put syntax properties on XHP blocks."
   (let ((start-pos (match-beginning 1)))
     (hack--forward-parse-xhp start-pos nil)
     ;; Point is now at the end of the XHP section.
@@ -421,16 +421,30 @@ If we find one, move point to its end, and set match data."
 
 If PROPERTIZE-TAGS is nil, apply syntax properties to text.
 If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
-  (let ((tags nil))
+  (let ((tags nil)
+        prev-tag-end)
     (goto-char start-pos)
 
     (catch 'done
       ;; Whilst we're inside XHP, and there are still more
       ;; tags in the buffer.
       (while t
+        ;; Find the next tag start.
         (unless (search-forward "<" limit t)
-          ;; Can't find any more open tags.
+          ;; Can't find any more tags.
           (throw 'done t))
+
+        ;; Set syntax properties on text content between tags.
+        (when (and prev-tag-end (not propertize-tags))
+          (let ((tag-start (1- (point))))
+            (save-excursion
+              (goto-char prev-tag-end)
+              ;; Ensure that " and ' are just punctuation inside XHP expressions.
+              (while (re-search-forward
+                      (rx (or "'" "\"")) tag-start t)
+                (unless (hack--in-xhp-interpolation-p (point) start-pos)
+                  (put-text-property (1- (point)) (point)
+		                     'syntax-table (string-to-syntax ".")))))))
 
         (let ((close-p (looking-at-p "/"))
               tag-name tag-name-start tag-name-end
@@ -479,7 +493,9 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
 
           (unless tags
             ;; Reach the close of the initial open XHP tag.
-            (throw 'done t)))))
+            (throw 'done t))
+
+          (setq prev-tag-end (point)))))
 
     (put-text-property start-pos (point)
                        'hack-xhp-expression start-pos)))
