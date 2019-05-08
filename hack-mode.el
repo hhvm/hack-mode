@@ -1076,13 +1076,17 @@ Returns t if we're in a text context, and nil if we're
 interpolating inside the XHP expression."
   (let ((expression-start-pos
          (get-text-property pos 'hack-xhp-expression)))
-    (when expression-start-pos
-      (let* ((ppss (save-excursion (syntax-ppss pos)))
-             (paren-pos (nth 1 ppss))
-             (interpolation-p
-              (when (and paren-pos (< expression-start-pos paren-pos))
-                (eq (char-after paren-pos) ?\{))))
-        (not interpolation-p)))))
+    (and expression-start-pos
+         (not (hack--in-xhp-interpolation-p pos expression-start-pos)))))
+
+(defun hack--in-xhp-interpolation-p (pos xhp-start-pos)
+  "Is POS inside an interpolation inside XHP?"
+  (let* ((ppss (save-excursion (syntax-ppss pos)))
+         (paren-pos (nth 1 ppss)))
+    (and
+     paren-pos
+     (< xhp-start-pos paren-pos)
+     (eq (char-after paren-pos) ?\{))))
 
 (defun hack--search-forward-no-xhp (regex limit)
   "Search forward for REGEX up to LIMIT, ignoring occurrences inside XHP blocks."
