@@ -433,7 +433,7 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
           (throw 'done t))
 
         (let ((close-p (looking-at-p "/"))
-              tag-name tag-start tag-end
+              tag-name tag-name-start tag-name-end
               self-closing-p)
           (when close-p
             (forward-char 1))
@@ -441,15 +441,15 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
           (re-search-forward
            (rx (+ (or (syntax word) (syntax symbol) ":" "-"))))
           (setq tag-name (match-string 0))
-	  (setq tag-start (match-beginning 0))
-          (setq tag-end (match-end 0))
+	  (setq tag-name-start (match-beginning 0))
+          (setq tag-name-end (match-end 0))
 
 	  (if propertize-tags
-              (add-face-text-property tag-start tag-end 'hack-xhp-tag)
+              (add-face-text-property tag-name-start tag-name-end 'hack-xhp-tag)
 
             ;; Ensure : and - are symbol consituents on tag names.
-            (goto-char tag-start)
-            (while (re-search-forward (rx (or ":" "-")) tag-end t)
+            (goto-char tag-name-start)
+            (while (re-search-forward (rx (or ":" "-")) tag-name-end t)
               (put-text-property (1- (point)) (point)
 		                 'syntax-table (string-to-syntax "_"))))
 
