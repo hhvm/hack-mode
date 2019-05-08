@@ -200,23 +200,32 @@ If we find one, move point to its end, and set match data."
       (put-text-property start (1+ start)
 		         'syntax-table (string-to-syntax ".")))))
 
+(defun hack-->-paired-p ()
+  "Return t if the > at point is a paired delimiter.
+
+E.g. Foo<int> has a paired delimiter, 1 > 2 does not."
+  (let* ((start (1- (point))))
+    (when (> start (1+ (point-min)))
+      (let ((prev-char (char-before start))
+            (prev-prev-char (char-before (1- start)))
+            (next-char (char-after (1+ start))))
+        (not
+         (or
+          ;; If there's a preceding space, we assume it's 1 > 2 rather
+          ;; than vec < int > with excess space.
+          (eq prev-char ?\ )
+          ;; 1 >> 2, looking at the second >.
+          (and (eq prev-char ?>) (eq prev-prev-char ?\ ))
+          ;; $foo->bar and 1<=>2
+          (memq prev-char (list ?= ?-))
+          ;; 1>=2
+          (eq next-char ?=)))))))
+
 (defun hack--propertize-gt ()
   "Ensure > in -> or => isn't treated as a > delimiter."
-  (let* ((start (1- (point))))
-    (when (> start (point-min))
-      (let ((prev-char (char-before start))
-	    (prev-prev-char (char-before (1- start)))
-            (next-char (char-after (1+ start)))
-	    (next-next-char (char-after (+ start 2))))
-        ;; If there's a preceding space, we assume it's 1 > 2 rather than
-        ;; a type vec < int > with excess space.
-        (when (or (memq prev-char (list ?= ?- ?\ ))
-                  ;; Also ignore 1 >> 2, first char.
-                  (and (eq prev-char ?\ ) (eq next-char ?>) (eq next-next-char ?\ ))
-		  ;; Ignore 1 >> 2, second car.
-                  (and (eq prev-prev-char ?\ ) (eq prev-char ?>) (eq next-char ?\ )))
-          (put-text-property start (1+ start)
-		             'syntax-table (string-to-syntax ".")))))))
+  (unless (hack-->-paired-p)
+    (put-text-property (1- (point)) (point)
+		       'syntax-table (string-to-syntax "."))))
 
 (defconst hack--syntax-propertize-function
   (syntax-propertize-rules

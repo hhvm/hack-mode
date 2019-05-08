@@ -246,21 +246,22 @@ then run BODY."
      (eq (syntax-class (syntax-after (point)))
          1))))
 
-(ert-deftest hack-syntax-angle-bracket-shift ()
-  "Left and right shift are not matched pairs of angle brackets."
+(ert-deftest hack-syntax-angle-bracket-shift-left ()
+  "Left shift is not a matched pair of angle brackets."
   (with-hack-buffer "1 << 2;"
-    (search-forward "<")
-    (backward-char)
+    (hack--search-up-to "<")
     (should
      (eq (syntax-class (syntax-after (point)))
          1))
     (forward-char)
     (should
      (eq (syntax-class (syntax-after (point)))
-         1)))
+         1))))
+
+(ert-deftest hack-syntax-angle-bracket-shift-right ()
+  "Left shift is not a matched pair of angle brackets."
   (with-hack-buffer "1 >> 2;"
-    (search-forward ">")
-    (backward-char)
+    (hack--search-up-to ">")
     (should
      (eq (syntax-class (syntax-after (point)))
          1))
