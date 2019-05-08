@@ -445,9 +445,7 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
           (setq tag-end (match-end 0))
 
 	  (if propertize-tags
-              (let* ((inhibit-modification-hooks t)
-                     (before-change-functions nil))
-                (add-face-text-property tag-start tag-end 'hack-xhp-tag))
+              (add-face-text-property tag-start tag-end 'hack-xhp-tag)
 
             ;; Ensure : and - are symbol consituents on tag names.
             (goto-char tag-start)
