@@ -171,6 +171,21 @@ $foo
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-case ()
+  (let ((src "switch ($foo) {
+  case 1:
+    bar();
+    bar();
+  default:
+    bar();
+}"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-xhp ()
   "Ensure we indent XHP expressions correctly."
   (let ((src "<?hh

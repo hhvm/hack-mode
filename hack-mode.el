@@ -1636,6 +1636,39 @@ Repeated parens on the same line are consider a single paren."
     line-end)
    str))
 
+(defun hack--current-line ()
+  "The current line enclosing point."
+  (buffer-substring
+   (line-beginning-position) (line-end-position)))
+
+(defun hack--switch-count ()
+  "Return a count of the switch blocks that enclose point.
+
+Given the code, where | is point:
+
+function foo() {
+  if ($bar) {
+    switch ($baz) {
+      |
+    }
+  }
+}
+
+Then this function returns 1."
+  (let ((switches 0)
+        enclosing-paren-pos)
+    (save-excursion
+      (setq enclosing-paren-pos (nth 1 (syntax-ppss)))
+      (while enclosing-paren-pos
+        (goto-char enclosing-paren-pos)
+        (let* ((line (s-trim (hack--current-line)))
+               (symbols (s-split (rx symbol-end) line t))
+               (symbol (car-safe symbols)))
+          (when (string= symbol "switch")
+            (setq switches (1+ switches))))
+        (setq enclosing-paren-pos (nth 1 (syntax-ppss)))))
+    switches))
+
 (defun hack-indent-line ()
   "Indent the current line of Hack code.
 Preserves point position in the line where possible."
@@ -1663,7 +1696,7 @@ Preserves point position in the line where possible."
                (1+ current-paren-pos)
                (line-end-position)))))
          (in-multiline-comment-p (nth 4 ppss))
-         (current-line (buffer-substring (line-beginning-position) (line-end-position))))
+         (current-line (hack--current-line)))
     ;; If the current line is just a closing paren, unindent by one level.
     (when (and
            (not in-multiline-comment-p)
@@ -1721,6 +1754,18 @@ Preserves point position in the line where possible."
                   (s-starts-with-p "?->" current-line)
                   (s-starts-with-p "|>" current-line))
           (setq paren-depth (1+ paren-depth))))
+
+      ;; Inside switch statements.
+      (let ((switch-count (hack--switch-count)))
+        (when (> switch-count 0)
+          ;; Expressions inside switch statements should be further
+          ;; indented, so they are underneath the case or default.
+          (setq paren-depth (+ paren-depth switch-count))
+
+          ;; The case or default line should be outdented one step.
+          (when (string-match-p (rx bol (* whitespace) (or "case" "default:" "}"))
+                                current-line)
+            (setq paren-depth (1- paren-depth)))))
 
       (hack--indent-preserve-point (* hack-indent-offset paren-depth))))
     ;; Point is now at the beginning of indentation, restore it
