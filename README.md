@@ -1,5 +1,18 @@
 # hack-mode [![MELPA](http://melpa.org/packages/hack-mode-badge.svg)](http://melpa.org/#/hack-mode) [![Build Status](https://travis-ci.com/hhvm/hack-mode.svg?branch=master)](https://travis-ci.com/hhvm/hack-mode)
-A major-mode for [ Hack ](https://hacklang.org/) code.
+
+`hack-mode` is an Emacs major mode for editing [Hack](https://hacklang.org/) code.
+
+![screenshot](screenshot.png)
+
+`hack-mode` provides indentation and extensive syntax
+highlighting. This includes:
+
+* Comment highlighting (additionally highlighting special comments
+  like `strict`, `HH_FIXME`)
+* Keyword highlighting (case insensitive where appropriate)
+* String (`'foo', `"foo"`, `<<<FOO` and `<<<'FOO'§) highlighting,
+  including interpolation
+* XHP support
 
 ## Installation
 
