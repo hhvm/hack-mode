@@ -4,8 +4,7 @@
 
 ![screenshot](screenshot.png)
 
-`hack-mode` provides indentation and extensive syntax
-highlighting. This includes:
+`hack-mode` includes extensive, precise syntax highlighting:
 
 * Comment highlighting (additionally highlighting special comments
   like `strict`, `HH_FIXME`)
@@ -13,6 +12,9 @@ highlighting. This includes:
 * String (`'foo', `"foo"`, `<<<FOO` and `<<<'FOO'§) highlighting,
   including interpolation
 * XHP support
+
+It also provides indentation, integration with `hackfmt` (see
+`hack-format-buffer`) and parenthesis match highlighting.
 
 ## Installation
 
