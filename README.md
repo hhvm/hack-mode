@@ -13,14 +13,37 @@
   including interpolation
 * XHP support
 
-It also provides indentation, integration with `hackfmt` (see
-`hack-format-buffer`) and parenthesis match highlighting.
+It also provides indentation, integration with `hackfmt` and
+parenthesis match highlighting.
 
 ## Installation
 
 Install from MELPA, or load this package into your elisp load-path.
 
 ## Configuration
+
+After installation, `hack-mode` will automatically run on `.hack`,
+`.hck` and `.hhi` files.
+
+It will also run on `.php` files, but `php-mode` will take precedence
+if installed. If you want `hack-mode` to take precedence, use the
+following:
+
+```emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.php\\'" . hack-mode))
+```
+
+### Formatting
+
+`hack-mode` provides `hack-format-buffer` to run `hackfmt` on the
+whole file. If you'd like this automatically run on save, add it to
+your hooks:
+
+```emacs-lisp
+(add-hook 'hack-mode-hook #'hack-enable-format-on-save)
+```
+
+### Other Packages
 
 We recommend using hack-mode with the following minor-modes:
 
@@ -30,15 +53,6 @@ We recommend using hack-mode with the following minor-modes:
 (add-hook 'hack-mode-hook #'company-mode)
 ```
 
-## .php files
-
-If you have both `hack-mode` and `php-mode` installed, `php-mode` will
-be associated with `.php` files. To override this, add the following
-configuration:
-
-```emacs-lisp
-(add-to-list 'auto-mode-alist '("\\.php\\'" . hack-mode))
-```
 
 ## License
 
