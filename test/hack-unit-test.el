@@ -408,6 +408,22 @@ then run BODY."
   (with-hack-buffer "CLASS"
     (should (eq (face-at-point) 'font-lock-keyword-face))))
 
+(ert-deftest hack-highlight-after-xhp-in-comment ()
+  "Regression test after XHP in comments."
+  (with-hack-buffer "class MyClass {
+  public function myMethod(): mixed {
+    // ( <baz> )
+      return
+        <foo
+          desc=\"hello\">
+        </foo>;
+  }
+}"
+    (hack--search-up-to "return")
+    (should (eq (face-at-point) 'font-lock-keyword-face))
+    (hack--search-up-to "foo")
+    (should (eq (face-at-point) 'hack-xhp-tag))))
+
 (ert-deftest hack-highlight-type ()
   (with-hack-buffer "string"
     (should (eq (face-at-point) 'font-lock-type-face))))

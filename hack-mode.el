@@ -63,24 +63,27 @@
 
 (defun hack--propertize-xhp ()
   "Put syntax properties on XHP blocks."
-  (let ((start-pos (match-beginning 1)))
-    (hack--forward-parse-xhp start-pos nil)
-    ;; Point is now at the end of the XHP section.
-    (let ((end-pos (point)))
-      (goto-char start-pos)
-      ;; Ensure that ' is not treated as a string delimiter, unless
-      ;; we're in an XHP interpolated region.
-      (while (search-forward "'" end-pos t)
-        (let* ((ppss (syntax-ppss))
-               (paren-pos (nth 1 ppss)))
-          (when (or (null paren-pos)
-                    (> start-pos paren-pos))
-            (put-text-property (1- (point)) (point)
-                               'syntax-table
-                               (string-to-syntax ".")))))
-      ;; We need to leave point after where we started, or we get an
-      ;; infinite loop.
-      (goto-char end-pos))))
+  (let* ((start-pos (match-beginning 1))
+         (ppss (syntax-ppss start-pos))
+         (in-comment (nth 4 ppss)))
+    (unless in-comment
+      (hack--forward-parse-xhp start-pos nil)
+      ;; Point is now at the end of the XHP section.
+      (let ((end-pos (point)))
+        (goto-char start-pos)
+        ;; Ensure that ' is not treated as a string delimiter, unless
+        ;; we're in an XHP interpolated region.
+        (while (search-forward "'" end-pos t)
+          (let* ((ppss (syntax-ppss))
+                 (paren-pos (nth 1 ppss)))
+            (when (or (null paren-pos)
+                      (> start-pos paren-pos))
+              (put-text-property (1- (point)) (point)
+                                 'syntax-table
+                                 (string-to-syntax ".")))))
+        ;; We need to leave point after where we started, or we get an
+        ;; infinite loop.
+        (goto-char end-pos)))))
 
 (defun hack--propertize-heredoc ()
   "Put `syntax-table' text properties on heredoc and nowdoc string literals.
@@ -179,12 +182,12 @@ If we find one, move point to its end, and set match data."
         (end-pos nil))
     (save-excursion
       (while (and (not end-pos)
-                  (re-search-forward hack-xhp-start-regex limit t)
-                  ;; Ignore XHP in comments.
-                  (not (nth 4 (syntax-ppss))))
-        (setq start-pos (match-beginning 1))
-        (hack--forward-parse-xhp start-pos limit t)
-        (setq end-pos (point))))
+                  (re-search-forward hack-xhp-start-regex limit t))
+        ;; Ignore XHP in comments.
+        (unless (nth 4 (syntax-ppss (match-beginning 1)))
+          (setq start-pos (match-beginning 1))
+          (hack--forward-parse-xhp start-pos limit t)
+          (setq end-pos (point)))))
     (when end-pos
       (set-match-data (list start-pos end-pos))
       (goto-char end-pos))))
