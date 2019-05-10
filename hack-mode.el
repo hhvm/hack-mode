@@ -1860,6 +1860,10 @@ Preserves point position in the line where possible."
   "Major mode for editing Hack code.
 
 \\{hack-mode-map\\}"
+  ;; Remove any old text properties, so we don't get stuck with
+  ;; incorrect regions of hack-xhp-expression.
+  (set-text-properties (point-min) (point-max) nil)
+
   (setq-local font-lock-defaults '(hack-font-lock-keywords))
   (set (make-local-variable 'syntax-propertize-function)
        hack--syntax-propertize-function)
