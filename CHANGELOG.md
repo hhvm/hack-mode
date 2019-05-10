@@ -1,6 +1,6 @@
 # 1.1
 
-No changes yet.
+Added `hack-format`, a format command that can also act on regions.
 
 # 1.0
 

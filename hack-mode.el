@@ -1791,6 +1791,31 @@ Preserves point position in the line where possible."
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.hck$" . hack-mode))
 
+(defun hack-format ()
+  "Format the current buffer or region with hackfmt."
+  (interactive)
+  (if (use-region-p)
+      (hack--format-region)
+    (hack-format-buffer)))
+
+(defun hack--format-region ()
+  "Format the active region."
+  (interactive)
+  (let* ((start (save-restriction
+                  (widen)
+                  (region-beginning)))
+         (end (save-restriction
+                (widen)
+                (region-end)))
+         (command
+          (format "%s --range %d %d %s"
+                  hack-hackfmt-name
+                  start end (buffer-file-name))))
+    (shell-command-on-region
+     start
+     end
+     command nil t)))
+
 (defun hack-format-buffer ()
   "Format the current buffer with hackfmt."
   (interactive)
