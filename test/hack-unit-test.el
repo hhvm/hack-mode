@@ -406,7 +406,19 @@ then run BODY."
   (with-hack-buffer "class"
     (should (eq (face-at-point) 'font-lock-keyword-face)))
   (with-hack-buffer "CLASS"
+    (should (eq (face-at-point) 'font-lock-keyword-face)))
+  (with-hack-buffer "endforeach"
     (should (eq (face-at-point) 'font-lock-keyword-face))))
+
+(ert-deftest hack-highlight-contextual-keyword ()
+  (with-hack-buffer "super"
+    (should (eq (face-at-point) 'font-lock-keyword-face))))
+
+(ert-deftest hack-highlight-constant ()
+  (with-hack-buffer "true"
+    (should (eq (face-at-point) 'font-lock-constant-face)))
+  (with-hack-buffer "TRUE"
+    (should (eq (face-at-point) 'font-lock-constant-face))))
 
 (ert-deftest hack-highlight-after-xhp-in-comment ()
   "Regression test after XHP in comments."

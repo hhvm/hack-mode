@@ -8,6 +8,9 @@ buffers with incorrect highlighting stay incorrect after upgrading.
 Fixed some highlighting bugs with code after comments that look like
 XHP tags.
 
+Better highlighting of obscure reserved keywords (`endforeach`) and built-in
+symbols like `__FILE__`.
+
 # 1.0
 
 Initial release:
