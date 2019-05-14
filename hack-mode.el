@@ -590,6 +590,7 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
      ;; Contextual keywords.
      "async"
      "await"
+     "concurrent"
      "enum"
      "newtype"
      "record"
