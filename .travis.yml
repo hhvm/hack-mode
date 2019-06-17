@@ -12,6 +12,10 @@ env:
   - EVM_EMACS=emacs-26.1-travis
 script:
   - emacs --version
+  # Test interpreted code.
+  - cask exec ert-runner
+  # Test compiled code.
+  - cask build
   - cask exec ert-runner
 
 notifications:
