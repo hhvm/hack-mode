@@ -1,3 +1,7 @@
+# 1.2
+
+No changes yet.
+
 # 1.1
 
 Fixed an error when loading hack-mode from a byte-compiled file
