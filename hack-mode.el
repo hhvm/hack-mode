@@ -125,7 +125,23 @@ match XHP usage, which looks like <foo:bar>."
         (put-text-property (1- (point)) (point)
 		           'syntax-table (string-to-syntax "_"))))))
 
-(eval-when-compile
+(defconst hack--header-regex
+  ;; <?hh can only occur on the first line. The only thing it may be preceded
+  ;; by is a shebang. It's compulsory, except in .hack files. See hphp.ll.
+  (rx
+   (or
+    buffer-start
+    (seq "#!" (* not-newline) "\n"))
+   (group "<?hh")
+   ;; Match // strict if it's present.
+   ;; See full_fidelity_parser.ml which calls FileInfo.parse_mode.
+   (? (0+ space)
+      "//"
+      (0+ space)
+      (group (or "strict" "partial" "experimental"))
+      (or space "\n"))))
+
+(eval-and-compile
   ;; https://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.heredoc
   (defconst hack--heredoc-regex
     (rx
@@ -136,22 +152,6 @@ match XHP usage, which looks like <foo:bar>."
        ;; https://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.nowdoc
        (seq "'" (+ (or (syntax word) (syntax symbol))) "'")))
      "\n"))
-
-  (defconst hack--header-regex
-    ;; <?hh can only occur on the first line. The only thing it may be preceded
-    ;; by is a shebang. It's compulsory, except in .hack files. See hphp.ll.
-    (rx
-     (or
-      buffer-start
-      (seq "#!" (* not-newline) "\n"))
-     (group "<?hh")
-     ;; Match // strict if it's present.
-     ;; See full_fidelity_parser.ml which calls FileInfo.parse_mode.
-     (? (0+ space)
-	"//"
-	(0+ space)
-	(group (or "strict" "partial" "experimental"))
-	(or space "\n"))))
 
   (defconst hack--xhp-class-name-regex
     ;; Based on is_next_xhp_class_name in full_fidelity_lexer.ml.
@@ -171,8 +171,8 @@ match XHP usage, which looks like <foo:bar>."
          "?"
          "="
          "(")
-        (* space)
-        (group "<" (not (any ?< ?\\ ??))))
+	(* space)
+	(group "<" (not (any ?< ?\\ ??))))
     "The regex used to match the start of an XHP expression."))
 
 (defun hack-font-lock-xhp (limit)
