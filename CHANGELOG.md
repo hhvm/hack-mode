@@ -1,5 +1,8 @@
 # 1.1
 
+Fixed an error when loading hack-mode from a byte-compiled file
+(e.g. when installed from MELPA).
+
 Added `hack-format`, a format command that can also act on regions.
 
 Ensure that starting `hack-mode` cleans up any old text properties, or
