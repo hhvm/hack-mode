@@ -1804,7 +1804,7 @@ Preserves point position in the line where possible."
               ;; We've changed something, so update the source buffer.
               (copy-to-buffer src-buf (point-min) (point-max)))
             (kill-buffer))
-        (error "Hackfmt failed, see *hackfmt* buffer for details")))
+        (user-error "Hackfmt failed, see *hackfmt* buffer for details")))
     ;; Do our best to restore point position.
     (goto-char (point-min))
     (forward-line (1- start-line))
