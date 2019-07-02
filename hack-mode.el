@@ -208,18 +208,22 @@ If we find one, move point to its end, and set match data."
 
 E.g. Foo<int> has a paired delimiter, 1 > 2 does not."
   (when (> pos (1+ (point-min)))
-    (let ((prev-char (char-before pos))
-          (prev-prev-char (char-before (1- pos)))
-          (next-char (char-after (1+ pos))))
+    (let* ((prev-prev-char (char-before (1- pos)))
+           (prev-char (char-before pos))
+	   (next-char (char-after (1+ pos)))
+
+	   (one-char-context (string prev-char ?>))
+	   (two-chars-context (string prev-prev-char prev-char ?>)))
       (not
        (or
         ;; If there's a preceding space, we assume it's 1 > 2 rather
         ;; than vec < int > with excess space.
-        (eq prev-char ?\ )
+	(string= one-char-context " >")
         ;; 1 >> 2, looking at the second >.
-        (and (eq prev-char ?>) (eq prev-prev-char ?\ ))
+	(string= two-chars-context " >>")
         ;; $foo->bar and 1<=>2
-        (memq prev-char (list ?= ?-))
+	(string= one-char-context "->")
+	(string= one-char-context "=>")
         ;; 1>=2
         (eq next-char ?=))))))
 
