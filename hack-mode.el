@@ -216,6 +216,8 @@ E.g. Foo<int> has a paired delimiter, 1 > 2 does not."
 	   (two-chars-context (string prev-prev-char prev-char ?>)))
       (not
        (or
+	;; foo() |> bar($$)
+	(string= one-char-context "|>")
         ;; If there's a preceding space, we assume it's 1 > 2 rather
         ;; than vec < int > with excess space.
 	(string= one-char-context " >")

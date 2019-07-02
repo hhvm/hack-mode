@@ -331,6 +331,14 @@ then run BODY."
      (eq (syntax-class (syntax-after (point)))
          1))))
 
+(ert-deftest hack-syntax-angle-bracket-pipe ()
+  "|> is not a matched delimiter."
+  (with-hack-buffer "$x = 1 |> foo();"
+    (hack--search-up-to ">")
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         1))))
+
 (ert-deftest hack-syntax-angle-bracket-greater-than ()
   "Greater than is not a matched type delimiter."
   (with-hack-buffer "$x = 1 < 2;"

@@ -1,6 +1,6 @@
 # 1.2
 
-No changes yet.
+Improved indentation for `|>`.
 
 # 1.1
 
