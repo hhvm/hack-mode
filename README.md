@@ -48,7 +48,7 @@ your hooks:
 We recommend using hack-mode with the following minor-modes:
 
 ```emacs-lisp
-(add-hook 'hack-mode-hook #'lsp-hack-enable)
+(add-hook 'hack-mode-hook #'lsp)
 (add-hook 'hack-mode-hook #'flycheck-mode)
 (add-hook 'hack-mode-hook #'company-mode)
 ```
