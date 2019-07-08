@@ -828,6 +828,14 @@ baz()"
      (eq (syntax-class (syntax-after (point)))
          (car (string-to-syntax "."))))))
 
+(ert-deftest hack-xhp-property-interpolation-syntax-angle-bracket ()
+  "< > delimiters inside XHP property interpolation are normal delimiters."
+  (with-hack-buffer "$f = <foo prop={$this->getProp()} />;"
+    (hack--search-up-to "->")
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         (car (string-to-syntax "."))))))
+
 (ert-deftest hack-xhp-interpolation ()
   "Interpolation in XHP blocks occurs between curly braces."
   (with-hack-buffer "$p = <p>{$x}</p>;"

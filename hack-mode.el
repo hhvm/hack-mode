@@ -433,12 +433,37 @@ E.g. Foo<int> has a paired delimiter, 1 > 2 does not."
       (set-match-data match-data)
       res)))
 
+(defun hack--propertize->-in-xhp-interpolation (start end xhp-start)
+  "Apply syntax properties to any interpolated occurrences of -> between START and END."
+  (save-excursion
+    (goto-char start)
+    (while (search-forward ">" end t)
+      (when (and
+             ;; We deliberately check for interpolation *before*
+             ;; the >. This ensures that we don't get confused if
+             ;; we still think > is a paired delimiter.
+             (hack--in-xhp-interpolation-p (1- (point)) xhp-start)
+             (not (hack-->-paired-p (1- (point)))))
+        ;; Ensure -> is just punctuation inside XHP interpolation in tags.
+        (put-text-property (1- (point)) (point)
+                           'syntax-table (string-to-syntax "."))))))
+
+(defun hack--propertize-quotes-in-xhp-interpolation (start end xhp-start)
+  "Apply syntax properties to any interpolated occurrences of ' or \" between START and END."
+  (save-excursion
+    (goto-char start)
+    (while (re-search-forward (rx (or "'" "\"")) end t)
+      (unless (hack--in-xhp-interpolation-p (point) xhp-start)
+        (put-text-property (1- (point)) (point)
+                           'syntax-table (string-to-syntax "."))))))
+
 (defun hack--forward-parse-xhp (start-pos limit &optional propertize-tags)
   "Move point past the XHP expression beginning at START-POS.
 
 If PROPERTIZE-TAGS is nil, apply syntax properties to text.
 If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
   (let ((tags nil)
+        tag-start
         prev-tag-end)
     (goto-char start-pos)
 
@@ -450,31 +475,16 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
         (unless (search-forward "<" limit t)
           ;; Can't find any more tags.
           (throw 'done t))
+        (setq tag-start (1- (point)))
 
-        ;; Set syntax properties on text content between tags.
         (when (and prev-tag-end (not propertize-tags))
-          (let ((tag-start (1- (point))))
-            (save-excursion
-              (goto-char prev-tag-end)
-              ;; Ensure XHP contents are punctuation unless interpolated.
-              (while (re-search-forward
-                      (rx (or "'" "\"" ">")) tag-start t)
-                (cond
-                 ;; Ensure that $foo->bar is not treated as a paired < > inside interpolated XHP.
-                 ((and (eq (char-before) ?>)
-                       ;; We deliberately check for interpolation
-                       ;; *before* the >. This ensures that we don't
-                       ;; get confused if we still think > is a paired
-                       ;; delimiter.
-                       (hack--in-xhp-interpolation-p (1- (point)) start-pos))
-                  (unless (hack-->-paired-p (1- (point)))
-                    (put-text-property (1- (point)) (point)
-		                       'syntax-table (string-to-syntax "."))))
-                 ;; Ensure that " and ' are just punctuation inside XHP expressions.
-                 ((memq (char-before) (list ?\" ?'))
-                  (unless (hack--in-xhp-interpolation-p (point) start-pos)
-                    (put-text-property (1- (point)) (point)
-		                       'syntax-table (string-to-syntax ".")))))))))
+          ;; Treat " and ' as punctuation inside XHP text content:
+          ;; <p>"</p>
+          ;; but not in properties or interpolation:
+          ;; <p id="foo">{func("baz")}</p>
+          (hack--propertize-quotes-in-xhp-interpolation prev-tag-end (point) start-pos)
+          ;; Treat -> as punctuation in interpolation.
+          (hack--propertize->-in-xhp-interpolation prev-tag-end (point) start-pos))
 
         (let ((close-p (looking-at-p "/"))
               tag-name tag-name-start tag-name-end
@@ -497,10 +507,23 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
               (put-text-property (1- (point)) (point)
 		                 'syntax-table (string-to-syntax "_"))))
 
-          (unless (search-forward ">" limit t)
-            ;; Can't find the matching close angle bracket, so the XHP
-            ;; expression is incomplete.
-            (throw 'done t))
+          ;; Find the closing > of this XHP tag, ignoring interpolation.
+          (let (tag-end)
+            (while (and (not tag-end)
+                        (search-forward ">" limit t))
+              (unless (and
+                       (hack--in-xhp-interpolation-p (1- (point)) start-pos)
+                       (not (hack-->-paired-p (1- (point)))))
+                ;; Not inside interpolation, so this > is the tag end.
+                (setq tag-end (point))))
+
+            (if tag-end
+                ;; Ensure -> is just punctuation inside XHP interpolation in tags.
+                (when (null propertize-tags)
+                  (hack--propertize->-in-xhp-interpolation tag-start tag-end start-pos))
+              ;; Can't find the matching close angle bracket, so the XHP
+              ;; expression is incomplete.
+              (throw 'done t)))
 
           (save-excursion
             (backward-char 2)
