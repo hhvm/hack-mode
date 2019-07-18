@@ -301,12 +301,6 @@ then run BODY."
      (eq (syntax-class (syntax-after (point)))
          1))))
 
-(with-hack-buffer "3 >> 4;"
-  (dotimes (_ 2)
-    (search-forward ">"))
-  (backward-char)
-  (syntax-class (syntax-after (point))))
-
 (ert-deftest hack-syntax-angle-bracket-lambda ()
   "Lambdas are not a matched pair."
   (with-hack-buffer "() ==> $x;"
