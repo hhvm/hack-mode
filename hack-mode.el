@@ -203,6 +203,14 @@ If we find one, move point to its end, and set match data."
       (put-text-property start (1+ start)
 		         'syntax-table (string-to-syntax ".")))))
 
+(defun hack--join-chars (&rest chars-or-strings)
+  "Convert CHARS-OR-STRINGS to a single concatenated string."
+  (let ((strings
+         (mapcar
+          (lambda (it) (if (stringp it) it (string it)))
+          chars-or-strings)))
+    (apply #'concat strings)))
+
 (defun hack-->-paired-p (pos)
   "Return t if the > at POS is a paired delimiter.
 
@@ -210,24 +218,33 @@ E.g. Foo<int> has a paired delimiter, 1 > 2 does not."
   (when (> pos (1+ (point-min)))
     (let* ((prev-prev-char (char-before (1- pos)))
            (prev-char (char-before pos))
-	   (next-char (char-after (1+ pos)))
+	   (next-char (or (char-after (1+ pos)) ""))
 
-	   (one-char-context (string prev-char ?>))
-	   (two-chars-context (string prev-prev-char prev-char ?>)))
+           ;; We look at a small amount of context to decide what
+           ;; syntax we're looking at.
+	   (context-1-before (hack--join-chars prev-char ?>))
+           (context-1-after (hack--join-chars ?> next-char))
+           (context-1-around (hack--join-chars prev-char ?> next-char))
+           (context-2-before-1-after
+            (hack--join-chars prev-prev-char prev-char ?> next-char)))
       (not
        (or
 	;; foo() |> bar($$)
-	(string= one-char-context "|>")
+	(string= context-1-before "|>")
         ;; If there's a preceding space, we assume it's 1 > 2 rather
         ;; than vec < int > with excess space.
-	(string= one-char-context " >")
-        ;; 1 >> 2, looking at the second >.
-	(string= two-chars-context " >>")
+	(string= context-1-around " > ")
+        ;; 1 >> 2, first >.
+	(string= context-1-around " >>")
+        ;; 1 >> 2, second >.
+        (string= context-2-before-1-after " >> ")
         ;; $foo->bar and 1<=>2
-	(string= one-char-context "->")
-	(string= one-char-context "=>")
+	(string= context-1-before "->")
+	(string= context-1-before "=>")
         ;; 1>=2
-        (eq next-char ?=))))))
+        (string= context-1-after ">=")
+        ;; $x >>= 2
+        (string= context-1-around " >>"))))))
 
 (defun hack--propertize-gt ()
   "Ensure > in -> or => isn't treated as a > delimiter."

@@ -333,6 +333,22 @@ then run BODY."
      (eq (syntax-class (syntax-after (point)))
          1))))
 
+(ert-deftest hack-syntax-angle-bracket-generic ()
+  "> is a matched delimiter for generics."
+  ;; This program is deliberately not well indented, because it's a
+  ;; regression test for #28.
+  (with-hack-buffer "function f<
+  T1,
+  T2,
+ >(): void {
+  echo \"\";
+  echo \"\";
+}"
+    (hack--search-up-to ">")
+    (should
+     (eq (syntax-class (syntax-after (point)))
+         5))))
+
 (ert-deftest hack-syntax-angle-bracket-greater-than ()
   "Greater than is not a matched type delimiter."
   (with-hack-buffer "$x = 1 < 2;"
