@@ -1716,7 +1716,7 @@ Preserves point position in the line where possible."
     ;; If the current line is just a closing paren, unindent by one level.
     (when (and
            (not in-multiline-comment-p)
-           (string-match-p (rx bol (0+ space) (or ")" "}")) current-line))
+           (string-match-p (rx bol (0+ space) (or ")" "}" ">" "]")) current-line))
       (setq paren-depth (1- paren-depth)))
     (cond
      ;; Don't indent inside heredoc/nowdoc strings.

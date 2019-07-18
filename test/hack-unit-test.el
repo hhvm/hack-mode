@@ -70,6 +70,35 @@ function foo(): int {
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-generic ()
+  "Generic brackets should be indented like other parens."
+  (let ((src "function f<
+  T1,
+  T2,
+>(): void {
+  echo \"\";
+  echo \"\";
+}"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
+(ert-deftest hack-indent-vec ()
+  "Generic brackets should be indented like other parens."
+  (let ((src "$x = vec[
+  1,
+  2,
+];"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-operator ()
   "After an infix operator, we should increase the indent."
   (let ((src "<?hh

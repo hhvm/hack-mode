@@ -1,6 +1,6 @@
 # 1.2
 
-Improved indentation for `|>`.
+Improved indentation for `|>`, generics, and vec literals.
 
 # 1.1
 
