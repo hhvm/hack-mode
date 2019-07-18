@@ -302,6 +302,7 @@ E.g. Foo<int> has a paired delimiter, 1 > 2 does not."
     ;; UNSAFE must start with //, and can have any text afterwards. See
     ;; full_fidelity_lexer.ml.
     (save-excursion
+      ;; TODO: this 'not found-pos' is a common pattern, factor it out.
       (while (and (not found-pos)
 		  (search-forward "UNSAFE" limit t))
 	(let* ((ppss (syntax-ppss))
