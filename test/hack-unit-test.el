@@ -113,6 +113,20 @@ $foo =
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-comparison ()
+  "Don't confuse <= with a paren that we should indent."
+  (let ((src "<?hh
+
+function f(int $n): bool {
+  return $n <= 0;
+}"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-method ()
   "Methods on a separate line should be indented."
   (let ((src "<?hh
