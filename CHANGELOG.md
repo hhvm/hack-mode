@@ -2,6 +2,8 @@
 
 Improved indentation for `|>`, generics, and vec literals.
 
+Fixed an issue where indentation would use tabs.
+
 # 1.1
 
 Fixed an error when loading hack-mode from a byte-compiled file

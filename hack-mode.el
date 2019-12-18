@@ -1888,6 +1888,9 @@ Preserves point position in the line where possible."
 
   (setq-local compile-command (concat hack-client-program-name " --from emacs"))
   (setq-local indent-line-function #'hack-indent-line)
+  ;; Always use spaces for indentation
+  (setq-local indent-tabs-mode nil)
+
   (setq-local comment-start "// ")
   (setq-local fill-paragraph-function #'hack-fill-paragraph)
   (setq imenu-generic-expression
