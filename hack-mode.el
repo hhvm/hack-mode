@@ -1809,6 +1809,9 @@ Preserves point position in the line where possible."
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.hck$" . hack-mode))
 
+;;;###autoload
+(add-to-list 'interpreter-mode-alist (cons (purecopy "hhvm") 'hack-mode))
+
 (defun hack-format ()
   "Format the current buffer or region with hackfmt."
   (interactive)
