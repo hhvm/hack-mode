@@ -25,6 +25,16 @@
 ;; Implements `hack-mode' for the Hack programming language.  This
 ;; includes support for highlighting and indentation.
 ;;
+;;; Formatting:
+;;
+;; `hack-mode' provides `hack-format-buffer' to run hackfmt on the
+;; whole file. If you'd like this automatically run on save, add it to
+;; your hooks.
+;;
+;; (add-hook 'hack-mode-hook #'hack-enable-format-on-save)
+;;
+;;; Replacing `php-mode':
+;;
 ;; If you also have `php-mode' installed, Emacs will use `php-mode'
 ;; for .php files. You can use `hack-mode' for .php by adding the
 ;; following to your configuration:
