@@ -23,8 +23,13 @@
 ;;; Commentary:
 ;;
 ;; Implements `hack-mode' for the Hack programming language.  This
-;; includes basic support for highlighting and indentation.
+;; includes support for highlighting and indentation.
 ;;
+;; If you also have `php-mode' installed, Emacs will use `php-mode'
+;; for .php files. You can use `hack-mode' for .php by adding the
+;; following to your configuration:
+;;
+;; (add-to-list 'auto-mode-alist '("\\.php\\'" . hack-mode))
 
 ;;; Code:
 (require 's)
