@@ -229,6 +229,17 @@ $foo
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
+(ert-deftest hack-indent-trailing-comment ()
+  (let ((src "function foo(): void { // stuff
+  bar();
+}"))
+    (with-temp-buffer
+      (hack-mode)
+      (insert src)
+
+      (indent-region (point-min) (point-max))
+      (should (string= (buffer-string) src)))))
+
 (ert-deftest hack-indent-xhp ()
   "Ensure we indent XHP expressions correctly."
   (let ((src "<?hh

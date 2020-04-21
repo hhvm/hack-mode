@@ -1720,14 +1720,6 @@ Preserves point position in the line where possible."
          (paren-depth (hack--paren-depth-for-indent (line-beginning-position)))
 
          (ppss (syntax-ppss (line-beginning-position)))
-         (current-paren-pos (nth 1 ppss))
-         (text-after-paren
-          (when current-paren-pos
-            (save-excursion
-              (goto-char current-paren-pos)
-              (buffer-substring
-               (1+ current-paren-pos)
-               (line-end-position)))))
          (in-multiline-comment-p (nth 4 ppss))
          (current-line (hack--current-line)))
     ;; If the current line is just a closing paren, unindent by one level.
@@ -1749,18 +1741,6 @@ Preserves point position in the line where possible."
       (when (or (string-match-p (rx bol (0+ space) "*") current-line)
                 (string= "" current-line))
         (hack--indent-preserve-point (1+ (* hack-indent-offset paren-depth)))))
-     ;; Indent according to the last paren position, if there is text
-     ;; after the paren. For example:
-     ;; foo(bar,
-     ;;     baz, <- this line
-     ((and
-       text-after-paren
-       (not (string-match-p (rx bol (0+ space) eol) text-after-paren)))
-      (let (open-paren-column)
-        (save-excursion
-          (goto-char current-paren-pos)
-          (setq open-paren-column (current-column)))
-        (hack--indent-preserve-point (1+ open-paren-column))))
      ;; Indent according to the amount of nesting.
      (t
       (let ((current-line (s-trim current-line))
