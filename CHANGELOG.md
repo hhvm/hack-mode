@@ -1,8 +1,11 @@
-# 1.2
+# 1.2 (not yet on MELPA stable).
 
 Improved indentation for `|>`, generics, and vec literals.
 
 Fixed an issue where indentation would use tabs.
+
+Fixed an issue where switching to `hack-mode` would mark the buffer as
+modified.
 
 # 1.1
 
