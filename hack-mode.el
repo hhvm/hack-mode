@@ -643,8 +643,8 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
      "die" "do" "echo" "else" "elseif" "empty" "enddeclare" "endfor"
      "endforeach" "endif" "endswitch" "endwhile" "eval" "exit" "extends"
      "final" "finally" "for" "foreach" "function" "global" "goto" "if"
-     "implements" "include" "include_once" "instanceof" "insteadof"
-     "interface" "isset" "list" "namespace" "new" "parent"
+     "implements" "include" "include_once" "insteadof"
+     "interface" "is" "isset" "list" "namespace" "new" "parent"
      "print" "private" "protected" "public" "require" "require_once"
      "return" "self" "static" "switch" "throw" "trait"
      "try" "unset" "use" "var" "while"
@@ -1664,7 +1664,7 @@ Repeated parens on the same line are consider a single paren."
 	"==" "!=" "===" "!==" "<=>"
 	"&" "^" "|" "&&" "||" "?:" "??" "|>"
 	"=" "+=" "-=" ".=" "*=" "/=" "%=" "<<=" ">>=" "&=" "^=" "|="
-	"instanceof" "is" "as" "?as")
+	"is" "as" "?as")
     (0+ space)
     line-end)
    str))

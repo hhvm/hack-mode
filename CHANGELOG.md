@@ -8,7 +8,8 @@ Fixed an issue where switching to `hack-mode` would mark the buffer as
 modified.
 
 Removed highlighting for obsolete keywords `and`, `or`, `xor` and
-`__halt_compiler`.
+`__halt_compiler`. Ensure that `as` and `is` are consistently
+keywords, but `instanceof` is not.
 
 # 1.1
 
