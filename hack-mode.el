@@ -638,17 +638,17 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
   (regexp-opt
    '(;; This is the list of keywords from full_fidelity_lexer.ml, but
      ;; removing types (boolean etc) and constants (true, false, null).
-     "__halt_compiler" "abstract" "and" "as" "break"
+     "abstract" "as" "break"
      "case" "catch" "class" "clone" "const" "continue" "declare" "default"
      "die" "do" "echo" "else" "elseif" "empty" "enddeclare" "endfor"
      "endforeach" "endif" "endswitch" "endwhile" "eval" "exit" "extends"
      "final" "finally" "for" "foreach" "function" "global" "goto" "if"
      "implements" "include" "include_once" "instanceof" "insteadof"
-     "interface" "isset" "list" "namespace" "new" "or" "parent"
+     "interface" "isset" "list" "namespace" "new" "parent"
      "print" "private" "protected" "public" "require" "require_once"
      "return" "self" "static" "switch" "throw" "trait"
      "try" "unset" "use" "var" "while"
-     "xor" "yield"
+     "yield"
      "inout" "using"
 
      ;; Contextual keywords.

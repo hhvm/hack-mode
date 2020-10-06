@@ -7,6 +7,9 @@ Fixed an issue where indentation would use tabs.
 Fixed an issue where switching to `hack-mode` would mark the buffer as
 modified.
 
+Removed highlighting for obsolete keywords `and`, `or`, `xor` and
+`__halt_compiler`.
+
 # 1.1
 
 Fixed an error when loading hack-mode from a byte-compiled file
