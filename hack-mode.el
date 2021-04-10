@@ -1339,6 +1339,9 @@ interpolating inside the XHP expression."
     (modify-syntax-entry ?< "(>" table)
     (modify-syntax-entry ?> ")<" table)
 
+    ;; ` is a paired delimiter for expression trees
+    (modify-syntax-entry ?\` "$" table)
+
     table))
 
 (defun hack--comment-prefix (s)
