@@ -1,4 +1,8 @@
-# 1.2 (not yet on MELPA stable).
+# 1.3 (not yet on MELPA stable)
+
+No changes yet.
+
+# 1.2
 
 Improved indentation for `|>`, generics, and vec literals.
 
