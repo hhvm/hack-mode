@@ -11,6 +11,9 @@ Removed highlighting for obsolete keywords `and`, `or`, `xor` and
 `__halt_compiler`. Ensure that `as` and `is` are consistently
 keywords, but `instanceof` is not.
 
+Remove support for highlighting `UNSAFE` and `UNSAFE_EXPR` which were
+removed from Hack in 2019.
+
 # 1.1
 
 Fixed an error when loading hack-mode from a byte-compiled file
