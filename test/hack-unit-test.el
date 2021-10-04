@@ -63,20 +63,14 @@ function foo(): int {
   }
 }
 "))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
 (ert-deftest hack-indent-repeated-parens ()
   "Repeated parens on the same line should not increase the indent"
   (let ((src "foo(foo(\n  \"baz\"\n));"))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -89,10 +83,7 @@ function foo(): int {
   echo \"\";
   echo \"\";
 }"))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -102,10 +93,7 @@ function foo(): int {
   1,
   2,
 ];"))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -116,10 +104,7 @@ function foo(): int {
 $foo =
   bar();
 "))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -130,10 +115,7 @@ $foo =
 function f(int $n): bool {
   return $n <= 0;
 }"))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -144,10 +126,7 @@ function f(int $n): bool {
 $foo = bar()
   ->baz();
 "))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -160,10 +139,7 @@ bar
           baz
 EOT;
 "))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -179,10 +155,7 @@ class MyClass {
   }
 }
 "))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 (ert-deftest hack-indent-left-shift ()
@@ -191,10 +164,7 @@ class MyClass {
 $foo = 1 << 2;
 bar();
 "))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -204,10 +174,7 @@ bar();
 $foo = bar()
   ?->baz;
 "))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -217,10 +184,7 @@ $foo = bar()
 $foo
   |> baz($$);
 "))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -232,10 +196,7 @@ $foo
   default:
     bar();
 }"))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -243,10 +204,7 @@ $foo
   (let ((src "function foo(): void { // stuff
   bar();
 }"))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -258,10 +216,7 @@ $x = <div>
   <p>hello world</p>
 </div>;
 "))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
@@ -272,20 +227,14 @@ $x = <div>
 function stuff(): int {
   $x = <p>hello</p>;
 }"))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
 (ert-deftest hack-indent-xhp-in-comment ()
   "XHP expressions in comments should not affect indentation."
   (let ((src "function foo(): void {\n  $x = 123;\n  // return <p>H'el'lo</p>;\n  1;\n}"))
-    (with-temp-buffer
-      (hack-mode)
-      (insert src)
-
+    (with-hack-buffer src
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
 
