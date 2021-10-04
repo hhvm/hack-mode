@@ -3,6 +3,24 @@
 (require 'ert)
 (require 'hack-mode)
 
+(defmacro with-hack-buffer (src &rest body)
+  "Insert SRC in a temporary `hack-mode' buffer, apply syntax highlighting,
+then run BODY."
+  (declare (indent 1) (debug t))
+  `(with-temp-buffer
+     (insert ,src)
+     (goto-char (point-min))
+     ;; Activate hack-mode, but don't run any hooks. This doesn't
+     ;; matter on Travis, but is defensive when running tests in the
+     ;; current Emacs instance.
+     (delay-mode-hooks (hack-mode))
+     ;; Ensure we've syntax-highlighted the whole buffer.
+     (if (fboundp 'font-lock-ensure)
+         (font-lock-ensure)
+       (with-no-warnings
+         (font-lock-fontify-buffer)))
+     ,@body))
+
 (defun hack--search-up-to (char)
   "Search forward for the next occurrence of CHAR, and put point before it."
   (search-forward char)
@@ -10,11 +28,7 @@
 
 (ert-deftest hack-fill-paragraph-comment ()
   "Comments with // should be filled correctly."
-  (with-temp-buffer
-    (hack-mode)
-    (insert "// foo bar baaaaaaaz foo bar baaaaaaaz foo bar baaaaaaaz foo bar baaaaaaaz foo bar baaaaaaaz foo bar baaaaaaaz")
-    (goto-char (point-min))
-
+  (with-hack-buffer "// foo bar baaaaaaaz foo bar baaaaaaaz foo bar baaaaaaaz foo bar baaaaaaaz foo bar baaaaaaaz foo bar baaaaaaaz"
     (fill-paragraph)
     (should
      (equal
@@ -24,12 +38,8 @@
 
 (ert-deftest hack-fill-paragraph-docblock ()
   "Comments with /* should be filled correctly."
-  (with-temp-buffer
-    (hack-mode)
-    (insert "/**\n * Thing Thing Thing Thing Thing Thing Thing Thing Thing Thing Thing Thing\n *\n * This runs very quickly\n */")
-    (goto-char (point-min))
+  (with-hack-buffer "/**\n * Thing Thing Thing Thing Thing Thing Thing Thing Thing Thing Thing Thing\n *\n * This runs very quickly\n */"
     (forward-line)
-
     (fill-paragraph)
     (should
      (equal
@@ -278,24 +288,6 @@ function stuff(): int {
 
       (indent-region (point-min) (point-max))
       (should (string= (buffer-string) src)))))
-
-(defmacro with-hack-buffer (src &rest body)
-  "Insert SRC in a temporary `hack-mode' buffer, apply syntax highlighting,
-then run BODY."
-  (declare (indent 1) (debug t))
-  `(with-temp-buffer
-     (insert ,src)
-     (goto-char (point-min))
-     ;; Activate hack-mode, but don't run any hooks. This doesn't
-     ;; matter on Travis, but is defensive when running tests in the
-     ;; current Emacs instance.
-     (delay-mode-hooks (hack-mode))
-     ;; Ensure we've syntax-highlighted the whole buffer.
-     (if (fboundp 'font-lock-ensure)
-         (font-lock-ensure)
-       (with-no-warnings
-         (font-lock-fontify-buffer)))
-     ,@body))
 
 (ert-deftest hack-syntax-angle-bracket-for-type ()
   "Match angle brackets in type parameters."
