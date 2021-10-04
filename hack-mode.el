@@ -527,8 +527,11 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
           (when close-p
             (forward-char 1))
           ;; Get the name of the current tag.
-          (re-search-forward
-           (rx (+ (or (syntax word) (syntax symbol) ":" "-"))))
+          (unless
+              (re-search-forward
+               (rx (+ (or (syntax word) (syntax symbol) ":" "-"))) nil t)
+            ;; Incomplete XHP tag, e.g. the user has just written "<".
+            (throw 'done t))
           (setq tag-name (match-string 0))
 	  (setq tag-name-start (match-beginning 0))
           (setq tag-name-end (match-end 0))
