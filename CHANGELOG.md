@@ -11,6 +11,8 @@ Removed highlighting for obsolete keywords `and`, `or`, `xor` and
 `__halt_compiler`. Ensure that `as` and `is` are consistently
 keywords, but `instanceof` is not.
 
+Fixed a error when writing XHP `<` before a tag name has been typed.
+
 # 1.1
 
 Fixed an error when loading hack-mode from a byte-compiled file
