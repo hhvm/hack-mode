@@ -886,3 +886,10 @@ baz()"
   (with-hack-buffer "// <foo>"
     (search-forward "f")
     (should (eq (face-at-point) 'font-lock-comment-face))))
+
+(ert-deftest hack-xhp-unfinished ()
+  "Don't crash if the user hasn't finished writing their XHP tag."
+  (with-hack-buffer "
+<
+"))
+
