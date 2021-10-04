@@ -11,6 +11,9 @@ Removed highlighting for obsolete keywords `and`, `or`, `xor` and
 `__halt_compiler`. Ensure that `as` and `is` are consistently
 keywords, but `instanceof` is not.
 
+Removed highlighting for obsolete `UNSAFE` and `UNSAFE_EXPR`
+(historically they disabled the type checker).
+
 Fixed a error when writing XHP `<` before a tag name has been typed.
 
 # 1.1

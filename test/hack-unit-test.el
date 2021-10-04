@@ -656,37 +656,6 @@ baz()"
     (search-forward "F")
     (should (not (eq (face-at-point) 'error)))))
 
-(ert-deftest hack-highlight-unsafe-block ()
-  "Highlight unsafe blocks."
-  (with-hack-buffer "// UNSAFE"
-    (search-forward "U")
-    (should (eq (face-at-point) 'error)))
-  (with-hack-buffer "//UNSAFE"
-    (search-forward "U")
-    (should (eq (face-at-point) 'error)))
-  ;; Ensure we don't highlight UNSAFE in other contexts.
-  (with-hack-buffer "/* UNSAFE */"
-    (search-forward "U")
-    (should (not (eq (face-at-point) 'error))))
-  (with-hack-buffer "$x = \" UNSAFE\";"
-    (search-forward "U")
-    (should (not (eq (face-at-point) 'error)))))
-
-(ert-deftest hack-highlight-unsafe-expr-block ()
-  "Highlight unsafe expression comments."
-  (with-hack-buffer "/* UNSAFE_EXPR */"
-    (search-forward "U")
-    (should (eq (face-at-point) 'error)))
-  ;; Ensure we don't highlight UNSAFE_EXPR in other contexts.
-  (with-hack-buffer "// UNSAFE_EXPR"
-    ;; This case is messy: it's not an UNSAFE_EXPR comment, but it's a
-    ;; valid UNSAFE comment. The _EXPR bit should not be highlighted.
-    (search-forward "X")
-    (should (not (eq (face-at-point) 'error))))
-  (with-hack-buffer "$x = \" UNSAFE_EXPR\";"
-    (search-forward "U")
-    (should (not (eq (face-at-point) 'error)))))
-
 (ert-deftest hack-highlight-hh-fixme ()
   "Highlight HH_FIXME comments."
   (with-hack-buffer "/* HH_FIXME[1234] hello world */"

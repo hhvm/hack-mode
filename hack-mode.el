@@ -311,57 +311,6 @@ E.g. Foo<int> has a paired delimiter, 1 > 2 does not."
       (set-match-data match-data)
       (goto-char found-pos))))
 
-(defun hack-font-lock-unsafe (limit)
-  "Search for UNSAFE comments."
-  (let ((case-fold-search nil)
-	(found-pos nil)
-	(match-data nil))
-    ;; UNSAFE must start with //, and can have any text afterwards. See
-    ;; full_fidelity_lexer.ml.
-    (save-excursion
-      ;; TODO: this 'not found-pos' is a common pattern, factor it out.
-      (while (and (not found-pos)
-		  (search-forward "UNSAFE" limit t))
-	(let* ((ppss (syntax-ppss))
-	       (in-comment (nth 4 ppss))
-	       (comment-start (nth 8 ppss)))
-	  (when in-comment
-	    (save-excursion
-	      (goto-char comment-start)
-	      (when (re-search-forward
-		     (rx point "//" (0+ whitespace) (group "UNSAFE"))
-		     limit t)
-		(setq found-pos (point))
-		(setq match-data (match-data))))))))
-    (when found-pos
-      (set-match-data match-data)
-      (goto-char found-pos))))
-
-(defun hack-font-lock-unsafe-expr (limit)
-  "Search for UNSAFE_EXPR comments."
-  (let ((case-fold-search nil)
-	(found-pos nil)
-	(match-data nil))
-    ;; UNSAFE_EXPR must start with /*, and can have any text afterwards. See
-    ;; full_fidelity_lexer.ml.
-    (save-excursion
-      (while (and (not found-pos)
-		  (search-forward "UNSAFE_EXPR" limit t))
-	(let* ((ppss (syntax-ppss))
-	       (in-comment (nth 4 ppss))
-	       (comment-start (nth 8 ppss)))
-	  (when in-comment
-	    (save-excursion
-	      (goto-char comment-start)
-	      (when (re-search-forward
-		     (rx point "/*" (0+ whitespace) (group "UNSAFE_EXPR"))
-		     limit t)
-		(setq found-pos (point))
-		(setq match-data (match-data))))))))
-    (when found-pos
-      (set-match-data match-data)
-      (goto-char found-pos))))
-
 (defun hack-font-lock-fixme (limit)
   "Search for HH_FIXME comments."
   (let ((case-fold-search nil)
@@ -1283,10 +1232,6 @@ interpolating inside the XHP expression."
 
     (hack-font-lock-fallthrough
      (1 'font-lock-keyword-face t))
-    (hack-font-lock-unsafe
-     (1 'error t))
-    (hack-font-lock-unsafe-expr
-     (1 'error t))
     (hack-font-lock-fixme
      (1 'error t))
     (hack-font-lock-ignore-error
