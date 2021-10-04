@@ -634,7 +634,7 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
      ;; even though users can't shadow this anyway.
      "==>"
 
-     ;; Treat self:: and static:: as keywords.
+     ;; Treat self:: and parent:: as keywords.
      "self"
      "parent")
    'symbols))
