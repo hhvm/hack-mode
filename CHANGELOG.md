@@ -18,6 +18,8 @@ keywords, but `instanceof` is not.
 Remove support for highlighting `UNSAFE` and `UNSAFE_EXPR` which were
 removed from Hack in 2019.
 
+Fixed a error when writing XHP `<` before a tag name has been typed.
+
 # 1.1
 
 Fixed an error when loading hack-mode from a byte-compiled file
