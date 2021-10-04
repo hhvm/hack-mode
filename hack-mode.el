@@ -134,11 +134,12 @@ be punctuation : followed by symbol foo:bar. This ensures we
 match XHP usage, which looks like <foo:bar>."
   (let ((start (match-beginning 1))
         (end (match-end 1)))
-    (save-excursion
-      (goto-char (1+ start))
-      (while (re-search-forward (rx (or ":" "-")) end t)
-        (put-text-property (1- (point)) (point)
-		           'syntax-table (string-to-syntax "_"))))))
+    (save-match-data
+      (save-excursion
+        (goto-char (1+ start))
+        (while (re-search-forward (rx (or ":" "-")) end t)
+          (put-text-property (1- (point)) (point)
+		             'syntax-table (string-to-syntax "_")))))))
 
 (defconst hack--header-regex
   ;; <?hh can only occur on the first line. The only thing it may be preceded
@@ -197,12 +198,11 @@ If we find one, move point to its end, and set match data."
         (end-pos nil))
     (save-excursion
       (while (and (not end-pos)
-                  (re-search-forward hack-xhp-start-regex limit t))
-        ;; Ignore XHP in comments.
-        (unless (nth 4 (syntax-ppss (match-beginning 1)))
-          (setq start-pos (match-beginning 1))
-          (hack--forward-parse-xhp start-pos limit t)
-          (setq end-pos (point)))))
+                  (re-search-forward hack-xhp-start-regex limit t)
+                  (not (nth 4 (syntax-ppss (match-beginning 1)))))
+        (setq start-pos (match-beginning 1))
+        (hack--forward-parse-xhp start-pos limit t)
+        (setq end-pos (point))))
     (when end-pos
       (set-match-data (list start-pos end-pos))
       (goto-char end-pos))))
@@ -634,7 +634,7 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
      ;; even though users can't shadow this anyway.
      "==>"
 
-     ;; Treat self:: and static:: as keywords.
+     ;; Treat self:: and parent:: as keywords.
      "self"
      "parent")
    'symbols))
