@@ -862,3 +862,9 @@ baz()"
 <
 "))
 
+(ert-deftest hack-hang-on-xhp-in-comment ()
+  "Regression test for font-lock hanging on XHP inside comments."
+  (with-hack-buffer "/*
+<foo></foo>
+*/"))
+

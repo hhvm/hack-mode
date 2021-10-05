@@ -79,7 +79,7 @@
 (defun hack--propertize-xhp ()
   "Put syntax properties on XHP blocks."
   (let* ((start-pos (match-beginning 1))
-         (ppss (syntax-ppss start-pos))
+         (ppss (save-excursion (syntax-ppss start-pos)))
          (in-comment (nth 4 ppss)))
     (unless in-comment
       (hack--forward-parse-xhp start-pos nil)
@@ -198,11 +198,14 @@ If we find one, move point to its end, and set match data."
     (save-excursion
       (while (and (not end-pos)
                   (re-search-forward hack-xhp-start-regex limit t))
-        ;; Ignore XHP in comments.
-        (unless (nth 4 (syntax-ppss (match-beginning 1)))
-          (setq start-pos (match-beginning 1))
-          (hack--forward-parse-xhp start-pos limit t)
-          (setq end-pos (point)))))
+        (let* ((ppss-start
+                (save-excursion (syntax-ppss (match-beginning 1))))
+               (in-comment (nth 4 ppss-start)))
+          ;; Ignore XHP in comments.
+          (unless in-comment
+            (setq start-pos (match-beginning 1))
+            (hack--forward-parse-xhp start-pos limit t)
+            (setq end-pos (point))))))
     (when end-pos
       (set-match-data (list start-pos end-pos))
       (goto-char end-pos))))
