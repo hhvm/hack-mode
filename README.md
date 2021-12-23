@@ -1,4 +1,4 @@
-# hack-mode [![MELPA](http://melpa.org/packages/hack-mode-badge.svg)](http://melpa.org/#/hack-mode) [![Build Status](https://travis-ci.com/hhvm/hack-mode.svg?branch=master)](https://travis-ci.com/hhvm/hack-mode)
+# hack-mode [![MELPA](http://melpa.org/packages/hack-mode-badge.svg)](http://melpa.org/#/hack-mode)
 
 `hack-mode` is an Emacs major mode for editing [Hack](https://hacklang.org/) code.
 
