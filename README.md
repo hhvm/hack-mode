@@ -9,7 +9,7 @@
 * Comment highlighting (additionally highlighting special comments
   like `strict`, `HH_FIXME`)
 * Keyword highlighting (case insensitive where appropriate)
-* String (`'foo', `"foo"`, `<<<FOO` and `<<<'FOO'`) highlighting,
+* String (`'foo'`, `"foo"`, `<<<FOO` and `<<<'FOO'`) highlighting,
   including interpolation
 * XHP support
 
