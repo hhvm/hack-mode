@@ -1116,9 +1116,10 @@ interpolating inside the XHP expression."
   "Search forward from point for an occurrence of a keyword."
   ;; Keywords in PHP are case insensitive. In Hack, it's a syntax
   ;; error if you use the wrong case, but they're still reserved (so
-  ;; you can't call a function CLASS).
-  (let ((case-fold-search t))
-    (hack--search-forward-no-xhp hack--keyword-regex limit)))
+  ;; you can't call a function CLASS). However, we have namespaces
+  ;; that use keywords with a different case (e.g HH\Lib\Keyset), so
+  ;; ignore occurrence with other cases.
+  (hack--search-forward-no-xhp hack--keyword-regex limit))
 
 (defun hack--search-forward-type (limit)
   "Search forward from point for an occurrence of a type name."
