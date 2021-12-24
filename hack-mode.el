@@ -1144,7 +1144,6 @@ interpolating inside the XHP expression."
      (regexp-opt
       '("null"
         "true" "false"
-        "__compiler_halt_offset__"
         ;; From naming_special_names.ml.
         "__CLASS__"
         "__TRAIT__"
