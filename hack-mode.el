@@ -1846,7 +1846,7 @@ Preserves point position in the line where possible."
         `(("Function"
            ,(rx
              line-start
-             (? (* space) (seq symbol-start (or "private" "protected" "public") symbol-end))
+             (? (* space) (seq symbol-start (or "private" "protected" "public" "internal") symbol-end))
              (? (* space) (seq symbol-start "static" symbol-end))
              (? (* space) (seq symbol-start "async" symbol-end))
              (* space)
