@@ -1,6 +1,20 @@
-# 1.3 (not yet on MELPA stable)
+# Next Version
 
 No changes yet.
+
+# 1.3
+
+Fixed infinite loops when XHP is nested in a comment
+
+Removed highlighting for obsolete keywords `array`, `record`,
+`__COMPILER_HALT_OFFSET`.
+
+Added highlighting for keywords `nameof`, `internal`, and `readonly`.
+
+Make keyword highlighting case-sensitive.
+
+Don't treat `#` as a comment anymore, as that syntax has been taken
+by enum classes.
 
 # 1.2
 
