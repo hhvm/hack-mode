@@ -619,6 +619,7 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
      "tuple"
      "type"
      "where"
+     "with"
 
      ;; These contextual keywords are also used for literals, so highlight them as keywords.
      "darray"
