@@ -238,19 +238,22 @@ E.g. Foo<int> has a paired delimiter, 1 > 2 does not."
   (when (> pos (1+ (point-min)))
     (let* ((prev-prev-char (char-before (1- pos)))
            (prev-char (char-before pos))
-	   (next-char (or (char-after (1+ pos)) ""))
+           (next-char (or (char-after (1+ pos)) ""))
 
            ;; We look at a small amount of context to decide what
            ;; syntax we're looking at.
-	   (context-1-before (hack--join-chars prev-char ?>))
+           (context-1-before (hack--join-chars prev-char ?>))
            (context-1-after (hack--join-chars ?> next-char))
            (context-1-around (hack--join-chars prev-char ?> next-char))
+           (context-2-before (hack--join-chars prev-prev-char prev-char ?>))
            (context-2-before-1-after
             (hack--join-chars prev-prev-char prev-char ?> next-char)))
       (not
        (or
-	;; foo() |> bar($$)
-	(string= context-1-before "|>")
+        ;; foo() |> bar($$)
+        (string= context-1-before "|>")
+        ;; foo() |?> bar ($$)
+        (string= context-2-before "|?>")
         ;; If there's a preceding space, we assume it's 1 > 2 rather
         ;; than vec < int > with excess space.
 	(string= context-1-around " > ")
@@ -1610,7 +1613,7 @@ Repeated parens on the same line are consider a single paren."
     (or "*" "/" "%" "+" "-" "."
 	"<<" ">>" "<" "<=" ">" ">="
 	"==" "!=" "===" "!==" "<=>"
-	"&" "^" "|" "&&" "||" "?:" "??" "|>"
+	"&" "^" "|" "&&" "||" "?:" "??" "|>" "|?>"
 	"=" "+=" "-=" ".=" "*=" "/=" "%=" "<<=" ">>=" "&=" "^=" "|="
 	"is" "as" "?as")
     (0+ space)
@@ -1713,7 +1716,8 @@ Preserves point position in the line where possible."
 	;;   ->bar(); <- this line
 	(when (or (s-starts-with-p "->" current-line)
                   (s-starts-with-p "?->" current-line)
-                  (s-starts-with-p "|>" current-line))
+                  (s-starts-with-p "|>" current-line)
+                  (s-starts-with-p "|?>" current-line))
           (setq paren-depth (1+ paren-depth))))
 
       ;; Inside switch statements.
