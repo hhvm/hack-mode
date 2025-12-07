@@ -587,9 +587,6 @@ If PROPERTIZE-TAGS is non-nil, apply `hack-xhp-tag' to tag names."
       res)))
 
 (defconst hack--keyword-regex
-  ;; Keywords, based on hphp.ll.
-  ;; We don't highlight endforeach etc, as they're syntax errors.
-  ;; From full_fidelity_lexer.ml.
   (regexp-opt
    '(;; This is the list of keywords from full_fidelity_lexer.ml, but
      ;; removing types (boolean etc) and constants (true, false, null).
