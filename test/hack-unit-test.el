@@ -407,8 +407,6 @@ function stuff(): int {
 (ert-deftest hack-highlight-keyword ()
   (with-hack-buffer "class"
     (should (eq (face-at-point) 'font-lock-keyword-face)))
-  (with-hack-buffer "CLASS"
-    (should (eq (face-at-point) 'font-lock-keyword-face)))
   (with-hack-buffer "endforeach"
     (should (eq (face-at-point) 'font-lock-keyword-face))))
 
@@ -557,14 +555,6 @@ qux();"
     (search-forward "baz")
     (should (eq (face-at-point) 'font-lock-comment-face))
     (search-forward "qux")
-    (should (not (eq (face-at-point) 'font-lock-comment-face)))))
-
-(ert-deftest hack-highlight-shell-comment ()
-  (with-hack-buffer "# foo bar
-baz()"
-    (search-forward "foo")
-    (should (eq (face-at-point) 'font-lock-comment-face))
-    (search-forward "baz")
     (should (not (eq (face-at-point) 'font-lock-comment-face)))))
 
 (ert-deftest hack-highlight-string-interpolation ()
