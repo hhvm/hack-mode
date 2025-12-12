@@ -2,6 +2,12 @@
 
 No changes yet.
 
+# 1.4
+
+Support the `with` and `module` keywords.
+
+Support the null-safe pipe operator `|?>`
+
 # 1.3
 
 Fixed infinite loops when XHP is nested in a comment
