@@ -1,6 +1,6 @@
 # Next Version
 
-No changes yet.
+Support the `package` keyword.
 
 # 1.4
 
