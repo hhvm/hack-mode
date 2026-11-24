@@ -1,6 +1,6 @@
 # Next Version
 
-Support the `package` keyword.
+Support the `named` and `package` keywords.
 
 # 1.4
 
